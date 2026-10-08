@@ -25,21 +25,23 @@ jobs:
         dotnet-version: '10.0.x'
 
     # 3. 生成动态递增版本号 (格式: 1.0.构建号)
+    # 改用通用的 bash 壳层运行，完美规避 PowerShell 复杂的符号定义和转义报错
     - name: Generate Dynamic Version
       id: versioning
-      shell: powershell
+      shell: bash
       run: |
-        num = "{{ github.run_number }}"
-        ver = "1.0.num"
-        echo "APP_VERSION=ver" >> env:GITHUB_OUTPUT
-        Write-Host "Generated Version: \$ver"
+        BUILD_NUM="\${{ github.run_number }}"
+        DYNAMIC_VER="1.0.\${BUILD_NUM}"
+        echo "APP_VERSION=\({DYNAMIC_VER}" >> \)GITHUB_OUTPUT
+        echo "Generated Version: \${DYNAMIC_VER}"
 
     # 4. 使用 Native AOT 编译发布项目 (注入动态版本号)
+    # 注意：通过 \(GITHUB_OUTPUT 拿到的变量在 Actions 里的格式为 \){{ steps.versioning.outputs.APP_VERSION }}
     - name: Dotnet Publish (Native AOT)
       run: |
         dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=\${{ steps.versioning.outputs.APP_VERSION }} --output ./publish
 
-    # 5. 使用全新稳定版的 Inno Setup Action 制作安装包
+    # 5. 使用全新的稳定版 Inno Setup Action 制作安装包
     - name: Compile Inno Setup Script
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.9
       with:
