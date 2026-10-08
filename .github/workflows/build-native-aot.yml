@@ -25,22 +25,22 @@ jobs:
         dotnet-version: '10.0.x'
 
     # 3. 生成动态递增版本号 (格式: 1.0.构建号)
+    # 采用 Windows 原生 PowerShell 环境，完美确保输出的字符串完全合规、无转义乱码
     - name: Generate Dynamic Version
       id: versioning
-      shell: bash
+      shell: powershell
       run: |
-        BUILD_NUM="\${{ github.run_number }}"
-        DYNAMIC_VER="1.0.\${BUILD_NUM}"
-        echo "APP_VERSION=\({DYNAMIC_VER}" >> \)GITHUB_OUTPUT
-        echo "Generated Version: \${DYNAMIC_VER}"
+        buildNum = "{{ github.run_number }}"
+        dynamicVer = "1.0.buildNum"
+        "APP_VERSION=dynamicVer" | Out-File -FilePath env:GITHUB_OUTPUT -Encoding utf8 -Append
+        Write-Host "Successfully generated clean version: \$dynamicVer"
 
-    # 4. 显式还原所有项目依赖 (修复 MSB4181 核心步骤)
-    # 提前将整个解决方案或子项目的依赖树锁定，彻底避免后续发布阶段的依赖死锁
+    # 4. 显式还原所有项目依赖
     - name: Restore NuGet Packages
       run: |
         dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64
 
-    # 5. 使用 Native AOT 编译发布项目 (加入 --no-restore 避免重复还原)
+    # 5. 使用 Native AOT 编译发布项目 (使用正确的动态版本变量)
     - name: Dotnet Publish (Native AOT)
       run: |
         dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=\${{ steps.versioning.outputs.APP_VERSION }} --no-restore --output ./publish
