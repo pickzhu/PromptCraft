@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<EFScaffoldModelStage>publish</EFScaffoldModelStage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+		<PrivateAssets>all</PrivateAssets>
+	</PackageReference>
     <ProjectReference Include="..\BaseClassLib\BaseClassLib.csproj" />
     <ProjectReference Include="..\PromptCraft.Consts\PromptCraft.Consts.csproj" />
     <ProjectReference Include="..\PromptCraft.Data\PromptCraft.Data.csproj" />

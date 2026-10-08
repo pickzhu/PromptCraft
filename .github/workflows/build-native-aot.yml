@@ -28,9 +28,10 @@ jobs:
     - name: Restore Desktop Project
       run: dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64 /p:Version=1.0.${{ github.run_number }}
 
-    # 4. 使用 Native AOT 编译发布主程序（跳过重复还原）
+    # 4. 使用 Native AOT 编译发布主程序（不生成 PDB 文件以减小体积）
+    # 注意：EF Core 的编译模型会在这一步自动生成
     - name: Dotnet Publish (Native AOT)
-      run: dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.${{ github.run_number }} --no-restore --output ./publish
+      run: dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.${{ github.run_number }} /p:DebugType=None /p:DebugSymbols=false --no-restore --output ./publish
 
     # 5. 使用稳定版 Inno Setup Action 制作安装包
     - name: Compile Inno Setup Script
