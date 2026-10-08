@@ -24,32 +24,31 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # 3. 核心修复：直接还原全局解决方案 (.sln) 文件！
-    # 这样 NuGet 才能从全局视野把你的 Data、Models、Desktop 等所有相互引用的多项目依赖全部恢复成功
-    - name: Restore Entire Solution
-      run: dotnet restore PromptCraft.sln -r win-x64 /p:Version=1.0.\${{ github.run_number }}
+    # 3. 仅还原桌面端项目（跳过 iOS/Android 等无法在 Windows 还原的项目）
+    - name: Restore Desktop Project
+      run: dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64 /p:Version=1.0.${{ github.run_number }}
 
-    # 4. 使用 Native AOT 编译发布主程序 (跳过重复还原)
+    # 4. 使用 Native AOT 编译发布主程序（跳过重复还原）
     - name: Dotnet Publish (Native AOT)
-      run: dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.\${{ github.run_number }} --no-restore --output ./publish
+      run: dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.${{ github.run_number }} --no-restore --output ./publish
 
     # 5. 使用稳定版 Inno Setup Action 制作安装包
     - name: Compile Inno Setup Script
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.9
       with:
         path: setup-script.iss
-        options: /DAppVersion=1.0.\${{ github.run_number }}
+        options: /DAppVersion=1.0.${{ github.run_number }}
 
     # 6. 自动创建公开的 GitHub Release 并挂载安装包
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.0.\${{ github.run_number }}
-        name: Release v1.0.\${{ github.run_number }}
+        tag_name: v1.0.${{ github.run_number }}
+        name: Release v1.0.${{ github.run_number }}
         body: |
           ### 🚀 自动化构建成功
           - **触发分支**: `master`/`main`
-          - **构建编号**: #\${{ github.run_number }}
+          - **构建编号**: #${{ github.run_number }}
           - **编译模式**: Windows x64 Native AOT
           
           该版本已由 GitHub Actions 自动打包并公开部署。
