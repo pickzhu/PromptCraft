@@ -24,11 +24,12 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # 3. 显式还原依赖 (干净的版本号，没有任何反斜杠)
-    - name: Restore NuGet Packages
-      run: dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64 /p:Version=1.0.\${{ github.run_number }}
+    # 3. 核心修复：直接还原全局解决方案 (.sln) 文件！
+    # 这样 NuGet 才能从全局视野把你的 Data、Models、Desktop 等所有相互引用的多项目依赖全部恢复成功
+    - name: Restore Entire Solution
+      run: dotnet restore PromptCraft.sln -r win-x64 /p:Version=1.0.\${{ github.run_number }}
 
-    # 4. 使用 Native AOT 编译发布项目
+    # 4. 使用 Native AOT 编译发布主程序 (跳过重复还原)
     - name: Dotnet Publish (Native AOT)
       run: dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.\${{ github.run_number }} --no-restore --output ./publish
 
