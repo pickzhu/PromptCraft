@@ -24,40 +24,30 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # 3. 生成动态递增版本号 (格式: 1.0.构建号)
-    # 采用 Windows 原生 PowerShell 环境，完美确保输出的字符串完全合规、无转义乱码
-    - name: Generate Dynamic Version
-      id: versioning
-      shell: powershell
-      run: |
-        buildNum = "{{ github.run_number }}"
-        dynamicVer = "1.0.buildNum"
-        "APP_VERSION=dynamicVer" | Out-File -FilePath env:GITHUB_OUTPUT -Encoding utf8 -Append
-        Write-Host "Successfully generated clean version: \$dynamicVer"
-
-    # 4. 显式还原所有项目依赖
+    # 3. 显式还原所有项目依赖 (传入严格纯净的版本号格式)
     - name: Restore NuGet Packages
       run: |
-        dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64
+        dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64 /p:Version=1.0.\${{ github.run_number }}
 
-    # 5. 使用 Native AOT 编译发布项目 (使用正确的动态版本变量)
+    # 4. 使用 Native AOT 编译发布项目
+    # 直接在流水线原生替换版本号，彻底断绝任何命令行或脚本语言转义报错的可能
     - name: Dotnet Publish (Native AOT)
       run: |
-        dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=\${{ steps.versioning.outputs.APP_VERSION }} --no-restore --output ./publish
+        dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.\${{ github.run_number }} --no-restore --output ./publish
 
-    # 6. 使用稳定版 Inno Setup Action 制作安装包
+    # 5. 使用稳定版 Inno Setup Action 制作安装包
     - name: Compile Inno Setup Script
       uses: Minionguyjpro/Inno-Setup-Action@v1.2.9
       with:
         path: setup-script.iss
-        options: /DAppVersion=\${{ steps.versioning.outputs.APP_VERSION }}
+        options: /DAppVersion=1.0.\${{ github.run_number }}
 
-    # 7. 自动创建公开的 GitHub Release 并挂载安装包
+    # 6. 自动创建公开的 GitHub Release 并挂载安装包
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v\${{ steps.versioning.outputs.APP_VERSION }}
-        name: Release v\${{ steps.versioning.outputs.APP_VERSION }}
+        tag_name: v1.0.\${{ github.run_number }}
+        name: Release v1.0.\${{ github.run_number }}
         body: |
           ### 🚀 自动化构建成功
           - **触发分支**: `master`/`main`
