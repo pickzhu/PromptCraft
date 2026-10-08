@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: write  # 保证自动创建 Release 的权限
+  contents: write
 
 jobs:
   build:
@@ -24,16 +24,13 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # 3. 显式还原所有项目依赖 (传入严格纯净的版本号格式)
+    # 3. 显式还原依赖 (干净的版本号，没有任何反斜杠)
     - name: Restore NuGet Packages
-      run: |
-        dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64 /p:Version=1.0.\${{ github.run_number }}
+      run: dotnet restore PromptCraft.Desktop/PromptCraft.Desktop.csproj -r win-x64 /p:Version=1.0.\${{ github.run_number }}
 
     # 4. 使用 Native AOT 编译发布项目
-    # 直接在流水线原生替换版本号，彻底断绝任何命令行或脚本语言转义报错的可能
     - name: Dotnet Publish (Native AOT)
-      run: |
-        dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.\${{ github.run_number }} --no-restore --output ./publish
+      run: dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=1.0.\${{ github.run_number }} --no-restore --output ./publish
 
     # 5. 使用稳定版 Inno Setup Action 制作安装包
     - name: Compile Inno Setup Script
