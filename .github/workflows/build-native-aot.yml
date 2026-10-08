@@ -3,10 +3,11 @@ name: Build Windows Native AOT & Release
 on:
   push:
     branches:
-      - main  # 监听 main 分支的提交
+      - master
+      - main
 
 permissions:
-  contents: write  # 必须赋予写权限，否则无法自动创建 Release 并上传文件
+  contents: write  # 保证自动创建 Release 的权限
 
 jobs:
   build:
@@ -23,26 +24,26 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # 3. 生成动态递增版本号 (格式: 1.0.GitHub构建号)
+    # 3. 生成动态递增版本号 (格式: 1.0.构建号)
     - name: Generate Dynamic Version
       id: versioning
       shell: powershell
       run: |
-        buildNumber = "{{ github.run_number }}"
-        dynamicVersion = "1.0.buildNumber"
-        echo "APP_VERSION=dynamicVersion" >> env:GITHUB_OUTPUT
-        Write-Host "Generated Version: \$dynamicVersion"
+        num = "{{ github.run_number }}"
+        ver = "1.0.num"
+        echo "APP_VERSION=ver" >> env:GITHUB_OUTPUT
+        Write-Host "Generated Version: \$ver"
 
-    # 4. 使用 Native AOT 编译发布项目 (将动态版本号注入到 .NET 程序中)
+    # 4. 使用 Native AOT 编译发布项目 (注入动态版本号)
     - name: Dotnet Publish (Native AOT)
       run: |
         dotnet publish PromptCraft.Desktop/PromptCraft.Desktop.csproj -c Release -r win-x64 /p:PublishAot=true /p:PublishTrimmed=true /p:Version=\${{ steps.versioning.outputs.APP_VERSION }} --output ./publish
 
-    # 5. 使用 Inno Setup 制作安装包
+    # 5. 使用全新稳定版的 Inno Setup Action 制作安装包
     - name: Compile Inno Setup Script
-      uses: amake/innosetup-action@v1
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.9
       with:
-        script: setup-script.iss
+        path: setup-script.iss
         options: /DAppVersion=\${{ steps.versioning.outputs.APP_VERSION }}
 
     # 6. 自动创建公开的 GitHub Release 并挂载安装包
@@ -53,7 +54,7 @@ jobs:
         name: Release v\${{ steps.versioning.outputs.APP_VERSION }}
         body: |
           ### 🚀 自动化构建成功
-          - **触发分支**: `main`
+          - **触发分支**: `master`/`main`
           - **构建编号**: #\${{ github.run_number }}
           - **编译模式**: Windows x64 Native AOT
           
