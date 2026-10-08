@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.Folders"
+             xmlns:folderVm="using:PromptCraft.ViewModels.PromptLibrary"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="360" d:DesignHeight="420"
+             x:DataType="vm:FolderPickerModel"
+             x:Class="PromptCraft.Views.Folders.FolderPickerView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="*,Auto" Margin="8" Width="340">
+        <!-- 文件夹多选列表（空=未分类；无文件夹时提示先创建） -->
+        <Border Grid.Row="0" CornerRadius="6" Background="{DynamicResource SukiDarkColor}"
+                BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1" Padding="6">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Folders}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="folderVm:PromptFolderItem">
+                            <!-- 自定义勾选行（自绘方框+对勾，不依赖 SukiUI CheckBox 主题，避免复选框渲染不全） -->
+                            <Border Background="Transparent" CornerRadius="4" Padding="8,6" Margin="0,2"
+                                    Cursor="Hand" PointerPressed="OnFolderItemPointerPressed">
+                                <Border.Styles>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="Background" Value="{DynamicResource SukiBorderBrush}" />
+                                    </Style>
+                                </Border.Styles>
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <Border Grid.Column="0" Width="18" Height="18" CornerRadius="3"
+                                            BorderThickness="1.5"
+                                            BorderBrush="{DynamicResource SukiPrimaryColor}"
+                                            Background="{DynamicResource SukiDarkColor}"
+                                            VerticalAlignment="Center">
+                                        <Path Data="M 4 9 L 7.5 12.5 L 14 5" Stroke="White" StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              IsVisible="{Binding IsSelected}" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="13"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- 状态 -->
+        <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"
+                   TextWrapping="Wrap" Margin="0,8,0,0"
+                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </Grid>
+</UserControl>

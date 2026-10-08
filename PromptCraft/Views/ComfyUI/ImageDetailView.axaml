@@ -1,0 +1,180 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:controls="clr-namespace:PromptCraft.Controls"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             d:DesignWidth="900" d:DesignHeight="700"
+             x:DataType="vm:ImageDetailModel"
+             x:Class="PromptCraft.Views.ComfyUI.ImageDetailView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="*, Auto, Auto" Margin="12">
+        <!-- Row 0: 大图 / 视频 -->
+        <Border CornerRadius="8" ClipToBounds="True"
+                Background="{DynamicResource SukiBorderBrush}">
+            <Grid>
+                <Image Source="{Binding FullImage}" Stretch="Uniform"
+                       MaxWidth="860" MaxHeight="500" IsVisible="{Binding !IsVideoItem}" />
+                <!-- 视频条目：封面+播放器（复用扩写/工作流详情 MediaVideoView 范式；
+                     CoverPath 用同步缩略图，避免重复抓帧） -->
+                <controls:MediaVideoView x:Name="DetailVideoView"
+                                         VideoPath="{Binding FullPath}"
+                                         CoverPath="{Binding CoverImagePath}"
+                                         IsPlaying="{Binding IsPlaying, Mode=TwoWay}"
+                                         IsVisible="{Binding IsVideoItem}" />
+                <!-- 中央播放按钮：视频且未播放（含暂停） -->
+                <Button x:Name="CenterPlayButton" Click="OnDetailVideoPlay"
+                        IsVisible="{Binding ShowCenterPlay}"
+                        Width="56" Height="56" CornerRadius="28" Padding="0"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#CC000000" Foreground="White"
+                        BorderThickness="0" Classes="NoPressedAnimation"
+                        ToolTip.Tip="{i18n:Localize Play}">
+                    <material:MaterialIcon Kind="PlayArrow" Width="26" Height="26"/>
+                </Button>
+                <ProgressBar IsIndeterminate="True"
+                             IsVisible="{Binding IsImageLoading}"
+                             VerticalAlignment="Center"
+                             HorizontalAlignment="Center"
+                             Width="200" />
+            </Grid>
+        </Border>
+
+        <!-- Row 1: 播放控制条（Border 外；MediaVideoView 的 VideoView 是原生空域窗口，
+             播放时盖住同区 Avalonia 元素，故按钮必须移出媒体区——与扩写页同因） -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,6,0,0"
+                    IsVisible="{Binding IsPlaying}"
+                    HorizontalAlignment="Left">
+            <Button Click="OnDetailVideoPause" Height="32" Padding="10,0"
+                    Background="#CC000000" Foreground="White" BorderThickness="0"
+                    Classes="NoPressedAnimation" ToolTip.Tip="{i18n:Localize Pause}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <material:MaterialIcon Kind="Pause" Width="16" Height="16" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i18n:Localize Pause}" VerticalAlignment="Center" FontSize="12"/>
+                </StackPanel>
+            </Button>
+            <Button Click="OnDetailVideoStop" Height="32" Padding="10,0"
+                    Background="#CC000000" Foreground="White" BorderThickness="0"
+                    Classes="NoPressedAnimation" ToolTip.Tip="{i18n:Localize Stop}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <material:MaterialIcon Kind="Stop" Width="16" Height="16" VerticalAlignment="Center"/>
+                    <TextBlock Text="{i18n:Localize Stop}" VerticalAlignment="Center" FontSize="12"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Row 2: 信息 + 操作 + ComfyUI 元数据（可滚动，防弹窗溢出） -->
+        <ScrollViewer Grid.Row="2" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6">
+            <TextBlock Text="{Binding FileName}" FontWeight="Bold"
+                       FontSize="15" TextWrapping="NoWrap"
+                       TextTrimming="CharacterEllipsis" />
+
+            <!-- 文件绝对路径：不同目录同名文件可区分；悬停显示完整路径 -->
+            <TextBlock Text="{Binding FullPath}" FontSize="11" Foreground="Gray"
+                       TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                       ToolTip.Tip="{Binding FullPath}"
+                       IsVisible="{Binding FullPath, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+            <!-- 元数据 -->
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock FontSize="12" Foreground="Gray" Text="{Binding DimensionsDisplay}" />
+                <TextBlock FontSize="12" Foreground="Gray" Text="{Binding FileSizeDisplay}" />
+                <TextBlock FontSize="12" Foreground="Gray" MaxWidth="120"
+                           TextTrimming="CharacterEllipsis"
+                           Text="{Binding Hash, FallbackValue='--'}" />
+                <TextBlock FontSize="12" Foreground="Gray" Text="{Binding CreatedAt}" />
+            </StackPanel>
+
+            <!-- 操作行：标签下拉最左，存为提示词/收藏/NSFW/删除按钮最右（删除在关闭按钮一侧） -->
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8" Margin="0,4,0,0">
+                <!-- 标签下拉（最左） -->
+                <controls:MultiSelectDropDown Grid.Column="0" HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"
+                                              ItemsSource="{Binding AvailableTags}"
+                                              SelectedDisplayText="{Binding SelectedTagsSummary}" />
+
+                <!-- 存为提示词（图库→词库显式保存入口，有元数据且正提示词非空时可用） -->
+                <Button Grid.Column="1" Command="{Binding SaveToLibraryCommand}"
+                        IsEnabled="{Binding CanSaveToLibrary}"
+                        ToolTip.Tip="{i18n:Localize PromptSaveFromGalleryTip}"
+                        Content="{i18n:Localize PromptSaveToLibrary}"
+                        MinWidth="92" Padding="10,6" FontWeight="DemiBold" FontSize="12"
+                        Classes="primary">
+                </Button>
+
+                <!-- 收藏（♡ 空心灰 → ♥ 实心红，由 ViewModel 计算属性驱动切换） -->
+                <Button Grid.Column="2" Command="{Binding ToggleFavoriteCommand}" ToolTip.Tip="{i18n:Localize Favorite}"
+                        Width="40" Height="40" Padding="0" CornerRadius="20"
+                        Background="Transparent" BorderThickness="0">
+                    <TextBlock Text="{Binding FavoriteIcon}" Foreground="{Binding FavoriteIconBrush}"
+                               FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+
+                <!-- NSFW（⭕ 红圈 → 🔞，由 ViewModel 计算属性驱动切换） -->
+                <Button Grid.Column="3" Command="{Binding ToggleNsfwCommand}" ToolTip.Tip="{i18n:Localize MarkNsfw}"
+                        Width="40" Height="40" Padding="0" CornerRadius="20"
+                        Background="Transparent" BorderThickness="0">
+                    <TextBlock Text="{Binding NsfwIcon}" Foreground="{Binding NsfwIconBrush}"
+                               FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+
+                <!-- 删除（红色背景白字，最右） -->
+                <Button Grid.Column="4" Command="{Binding DeleteCommand}" Content="{i18n:Localize DeleteImageAction}"
+                        MinWidth="70" Padding="10,6" FontWeight="DemiBold"
+                        Classes="danger">
+                </Button>
+            </Grid>
+
+            <!-- ComfyUI 元数据（压缩存储，此处按需解压展示） -->
+            <Border IsVisible="{Binding HasMetadata}"
+                    Margin="0,4,0,0" Padding="10" CornerRadius="8"
+                    Background="{DynamicResource SukiBorderBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{i18n:Localize PromptAndWorkflow}" FontWeight="Bold" FontSize="14" />
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{Binding WorkflowTitle}" FontSize="12"
+                                   Foreground="Gray" TextWrapping="Wrap" />
+                        <Border IsVisible="{Binding IsWorkflowArchived}" Background="{DynamicResource WarningTintBrush}"
+                                CornerRadius="4" Padding="4,0">
+                            <TextBlock Text="{i18n:Localize Archived}" FontSize="10" Foreground="{DynamicResource WarningBrush}"/>
+                        </Border>
+                    </StackPanel>
+
+                    <TextBlock Text="{i18n:Localize PositivePrompt}" FontSize="12" FontWeight="DemiBold" Foreground="Gray" />
+                    <ScrollViewer MaxHeight="84" VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding PositivePrompt}" IsReadOnly="True"
+                                 TextWrapping="Wrap" AcceptsReturn="True" />
+                    </ScrollViewer>
+
+                    <TextBlock Text="{i18n:Localize NegativePrompt}" FontSize="12" FontWeight="DemiBold" Foreground="Gray" />
+                    <ScrollViewer MaxHeight="84" VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding NegativePrompt}" IsReadOnly="True"
+                                 TextWrapping="Wrap" AcceptsReturn="True" />
+                    </ScrollViewer>
+
+                    <TextBlock Text="{Binding ExtractedSummary}" FontSize="12"
+                               Foreground="Gray" TextWrapping="Wrap" />
+
+                    <TextBlock Text="{i18n:Localize WorkflowJsonSection}" FontSize="12" FontWeight="DemiBold" Foreground="Gray" />
+                    <ScrollViewer MaxHeight="150" HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding WorkflowJson}" IsReadOnly="True"
+                                 FontFamily="Consolas" FontSize="12" AcceptsReturn="True" />
+                    </ScrollViewer>
+
+                    <TextBlock Text="{i18n:Localize PromptJsonSection}" FontSize="12" FontWeight="DemiBold" Foreground="Gray" />
+                    <ScrollViewer MaxHeight="150" HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding PromptJson}" IsReadOnly="True"
+                                 FontFamily="Consolas" FontSize="12" AcceptsReturn="True" />
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

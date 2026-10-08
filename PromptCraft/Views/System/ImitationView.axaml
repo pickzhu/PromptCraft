@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:ImitationViewModel"
+             x:Class="PromptCraft.ImitationView"
+             d:DesignWidth="1600" d:DesignHeight="900"
+             mc:Ignorable="d">
+
+    <Grid ColumnDefinitions="480,*" Margin="16" ColumnSpacing="16">
+
+        <!-- 左：参数面板 -->
+        <suki:GlassCard Padding="20" IsEnabled="{Binding !IsBusy}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{i18n:Localize AiProviderLabel}" Classes="form-label"/>
+                    <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}"
+                              DisplayMemberBinding="{Binding Name}"/>
+
+                    <TextBlock Text="{i18n:Localize ModelLabel}" Classes="form-label"/>
+                    <ComboBox ItemsSource="{Binding FilteredModels}" SelectedItem="{Binding SelectedModel}"
+                              DisplayMemberBinding="{Binding ModelName}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,4,0,0"
+                          IsVisible="{Binding !HasExpandModels}">
+                        <TextBlock Grid.Column="0" Text="{Binding NoModelsText}" FontSize="12" Opacity="0.8"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Classes="accent" Command="{Binding GoSettingsCommand}" Padding="8,2" VerticalAlignment="Center">
+                            <TextBlock Text="{i18n:Localize GoConfigureLabel}" FontSize="12"/>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="{i18n:Localize OutputFormatLabel}" Classes="form-label"/>
+                    <ComboBox ItemsSource="{Binding FormatItems}" SelectedItem="{Binding SelectedFormat}"
+                              DisplayMemberBinding="{Binding Name}"/>
+
+                    <TextBlock Text="{i18n:Localize OutputLanguageLabel}" Classes="form-label"/>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <RadioButton GroupName="ImitationOutLang" Content="{i18n:Localize LangChinese}" IsChecked="{Binding IsLangZh}"/>
+                        <RadioButton GroupName="ImitationOutLang" Content="{i18n:Localize LangEnglish}" IsChecked="{Binding IsLangEn}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </suki:GlassCard>
+
+        <!-- 右：原始提示词 + 仿写要求 + 结果 -->
+        <Grid Grid.Column="1" RowDefinitions="*,*" RowSpacing="12">
+            <suki:GlassCard Padding="16" Grid.Row="0">
+                <Grid RowDefinitions="Auto,*,Auto,*,Auto" RowSpacing="8">
+                    <TextBlock Text="{i18n:Localize ImitationSourceLabel}" FontWeight="DemiBold"/>
+                    <TextBox Grid.Row="1" Text="{Binding SourcePrompt, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalContentAlignment="Top" FontSize="13"
+                             PlaceholderText="{i18n:Localize ImitationSourcePlaceholder}"/>
+
+                    <TextBlock Grid.Row="2" Text="{i18n:Localize ImitationRequirementLabel}" FontWeight="DemiBold"/>
+                    <TextBox Grid.Row="3" Text="{Binding Requirement, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalContentAlignment="Top" FontSize="13"
+                             PlaceholderText="{i18n:Localize ImitationRequirementPlaceholder}"/>
+
+                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto">
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                        <Button Grid.Column="1" Background="{DynamicResource PrimaryBrush}" Foreground="White"
+                                Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBusy}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <material:MaterialIcon Kind="AutoFixHigh"/>
+                                <TextBlock Text="{i18n:Localize ImitationGenerate}"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" Margin="8,0,0,0" Foreground="White" Background="{DynamicResource DangerDeepBrush}"
+                                IsVisible="{Binding IsBusy}" Command="{Binding StopCommand}"
+                                Content="{i18n:Localize ExpandStop}"/>
+                    </Grid>
+                </Grid>
+            </suki:GlassCard>
+
+            <suki:GlassCard Padding="16" Grid.Row="1">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <TextBlock Text="{i18n:Localize ImitationResult}" FontWeight="DemiBold"/>
+                        <Button Grid.Column="1" Content="{i18n:Localize CopyPrompt}" Foreground="{DynamicResource PrimaryBrush}"
+                                Command="{Binding CopyResultCommand}" IsEnabled="{Binding HasResult}"
+                                Margin="12,0,0,0"/>
+                        <Button Grid.Column="2" Content="{i18n:Localize SaveToLibrary}" Foreground="{DynamicResource SuccessTextBrush}"
+                                Command="{Binding SaveToLibraryCommand}" IsEnabled="{Binding HasResult}"
+                                Margin="12,0,0,0"/>
+                    </Grid>
+                    <TextBox Grid.Row="1" Text="{Binding Result, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalContentAlignment="Top"
+                             PlaceholderText="{i18n:Localize ImitationResultPlaceholder}"/>
+                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{i18n:Localize ExpandResultTip}" Classes="hint"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ResultCharCountText}" Classes="hint"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" IsVisible="{Binding HasResult}"/>
+                    </Grid>
+                </Grid>
+            </suki:GlassCard>
+
+            <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3"
+                         VerticalAlignment="Top" Grid.RowSpan="2"/>
+        </Grid>
+    </Grid>
+</UserControl>

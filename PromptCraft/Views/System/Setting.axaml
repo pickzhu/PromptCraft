@@ -1,0 +1,388 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DesignWidth="800"
+			 d:DesignHeight="450"
+             xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Collections"
+			 xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+			 xmlns:local="using:PromptCraft.ViewModels.System"
+			 xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+			 xmlns:models="using:PromptCraft.Models"
+			 xmlns:promptcraft="clr-namespace:PromptCraft;assembly=PromptCraft"
+			 x:DataType="local:SettingModel"
+             x:Class="PromptCraft.Setting"
+			 mc:Ignorable="d">
+	<UserControl.Resources>
+		<generic:List x:Key="Collection" x:TypeArguments="suki:SettingsLayoutItem">
+
+			<!-- 1. AI Providers（最重要） -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize AIProviders}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,25,0,0" Padding="25">
+							<StackPanel Spacing="12">
+								<ItemsControl ItemsSource="{Binding Providers}" Margin="0,4,0,0">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate x:DataType="models:ProviderConfig">
+											<Border Padding="10" Margin="0,3" CornerRadius="6"
+													Background="{DynamicResource SukiBackgroundColor}">
+												<Grid ColumnDefinitions="*,Auto,Auto">
+													<StackPanel VerticalAlignment="Center" Orientation="Horizontal" Spacing="8">
+														<TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+														<TextBlock Text="{i18n:Localize ProviderDisabledTag}" Foreground="Gray" IsVisible="{Binding !Enabled}"/>
+														<TextBlock Text="{Binding BaseUrl}" Foreground="{DynamicResource SukiLowText}" FontSize="12"/>
+													</StackPanel>
+													<Button Grid.Column="1" Classes="IconCircle" Margin="4,0"
+															ToolTip.Tip="{i18n:Localize ProviderEditTooltip}"
+															Command="{Binding $parent[ItemsControl].((local:SettingModel)DataContext).EditProviderCommand}"
+															CommandParameter="{Binding}">
+														<avalonia:MaterialIcon Kind="Pencil"/>
+													</Button>
+													<Button Grid.Column="2" Classes="CircleDelete" Margin="4,0"
+															ToolTip.Tip="{i18n:Localize ProviderDeleteTooltip}"
+															Command="{Binding $parent[ItemsControl].((local:SettingModel)DataContext).DeleteProviderCommand}"
+															CommandParameter="{Binding}">
+														<avalonia:MaterialIcon Kind="Close"/>
+													</Button>
+												</Grid>
+											</Border>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+
+								<!-- 新增按钮：仅在非编辑态显示 -->
+								<Button Margin="0,8,0,0" HorizontalAlignment="Left"
+										IsVisible="{Binding !IsEditingProvider}"
+										Command="{Binding StartNewProviderCommand}"
+										Content="{i18n:Localize AddProvider}"/>
+
+								<Border Padding="14" CornerRadius="6" Margin="0,8,0,0"
+										IsVisible="{Binding IsEditingProvider}"
+										Background="{DynamicResource SukiBackgroundColor}">
+									<StackPanel Spacing="10">
+										<Grid ColumnDefinitions="100,*,Auto" RowDefinitions="Auto,Auto,Auto">
+											<TextBlock Text="{i18n:Localize ProviderName}" VerticalAlignment="Center"/>
+											<TextBox Grid.Column="1" Text="{Binding ProviderEditName}"
+													 PlaceholderText="{i18n:Localize ProviderNamePlaceholder}"/>
+											<ToggleSwitch Grid.Row="0" Grid.Column="2" Margin="12,0,0,0"
+														  IsChecked="{Binding ProviderEditEnabled}" VerticalAlignment="Center"
+														  ToolTip.Tip="{i18n:Localize ProviderEnabledTip}"/>
+
+											<TextBlock Grid.Row="1" Text="{i18n:Localize ProviderBaseUrl}" VerticalAlignment="Center" Margin="0,6,0,0"/>
+											<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ProviderEditBaseUrl}" Margin="0,6,0,0"
+													 PlaceholderText="https://api.deepseek.com/v1"/>
+
+											<TextBlock Grid.Row="2" Text="{i18n:Localize ProviderApiKey}" VerticalAlignment="Center" Margin="0,6,0,0"/>
+											<Grid Grid.Row="2" Grid.Column="1" Margin="0,6,0,0">
+												<TextBox Text="{Binding ProviderEditApiKey}"
+														 PasswordChar="{Binding ProviderApiKeyVisible, Converter={StaticResource BoolToPasswordChar}}"
+														 PlaceholderText="{i18n:Localize ProviderApiKeyPlaceholder}"/>
+												<ToggleButton Classes="EyeInside" HorizontalAlignment="Right" VerticalAlignment="Center"
+															  Margin="0,0,6,0" IsChecked="{Binding ProviderApiKeyVisible}"
+															  ToolTip.Tip="{i18n:Localize ProviderEditEyeTip}">
+													<avalonia:MaterialIcon Kind="{Binding $parent[ToggleButton].IsChecked, Converter={StaticResource BoolToEyeIcon}}"/>
+													<ToggleButton.Styles>
+														<Style Selector="ToggleButton.EyeInside">
+															<Setter Property="Background" Value="Transparent"/>
+															<Setter Property="BorderThickness" Value="0"/>
+															<Setter Property="Padding" Value="4"/>
+														</Style>
+													</ToggleButton.Styles>
+												</ToggleButton>
+											</Grid>
+										</Grid>
+
+										<Grid ColumnDefinitions="3*,70,70,90,90,40" Margin="0,12,0,0">
+											<TextBlock Text="{i18n:Localize ModelNameHeader}" FontWeight="SemiBold"/>
+											<TextBlock Grid.Column="1" Text="{i18n:Localize ModelExpandHeader}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+											<TextBlock Grid.Column="2" Text="{i18n:Localize ModelReverseHeader}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+											<TextBlock Grid.Column="3" Text="{i18n:Localize ModelDefaultExpandHeader}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+											<TextBlock Grid.Column="4" Text="{i18n:Localize ModelDefaultReverseHeader}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+											<TextBlock Grid.Column="5" Text="{i18n:Localize ModelActionsHeader}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+										</Grid>
+
+										<ItemsControl ItemsSource="{Binding EditableRows}">
+											<ItemsControl.ItemTemplate>
+												<DataTemplate x:DataType="local:ProviderModelRow">
+													<Grid ColumnDefinitions="3*,70,70,90,90,40" Margin="0,4">
+																<!-- 编辑态回显绑定 Text 而非 SelectedItem：Avalonia 12 可编辑 ComboBox 在设置 ItemsSource 时会用空 Text 触发一次匹配，匹配不上就把 SelectedItem 置 null 并经双向绑定回写 ModelName，导致编辑时下拉框空白 -->
+														<ComboBox IsEditable="True"
+																  ItemsSource="{Binding $parent[ItemsControl].((local:SettingModel)DataContext).AvailableModelsPool}"
+																  Text="{Binding ModelName}"
+																  LostFocus="ModelCombo_LostFocus"
+																  Loaded="ComboBox_Loaded"/>
+														<CheckBox Grid.Column="1" IsChecked="{Binding UseForExpand}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+														<CheckBox Grid.Column="2" IsChecked="{Binding UseForReverse}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+														<RadioButton Grid.Column="3" GroupName="DefExpand" IsChecked="{Binding IsDefaultExpand}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+														<RadioButton Grid.Column="4" GroupName="DefReverse" IsChecked="{Binding IsDefaultReverse}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+														<Button Grid.Column="5" Classes="CircleDelete" HorizontalAlignment="Center" VerticalAlignment="Center"
+																Command="{Binding $parent[ItemsControl].((local:SettingModel)DataContext).RemoveModelRowCommand}"
+																CommandParameter="{Binding}">
+															<avalonia:MaterialIcon Kind="Close"/>
+														</Button>
+													</Grid>
+												</DataTemplate>
+											</ItemsControl.ItemTemplate>
+										</ItemsControl>
+
+										<TextBlock Text="{i18n:Localize ProviderDefaultGlobalTip}"
+												   Foreground="Gray" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0"/>
+
+										<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+											<Button Content="{i18n:Localize ProviderAddModel}" Command="{Binding AddModelRowCommand}"/>
+											<Button Content="{i18n:Localize ProviderFetchModels}" Command="{Binding FetchModelsCommand}"/>
+											<Button Content="{i18n:Localize Save}" Background="{DynamicResource PrimaryBrush}" Foreground="White"
+													Command="{Binding SaveProviderCommand}"/>
+											<TextBlock Text="{Binding ProviderTestStatus}" VerticalAlignment="Center"
+													   FontWeight="Bold" Margin="8,0,0,0"/>
+										</StackPanel>
+									</StackPanel>
+								</Border>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 2. ComfyUI -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize ComfyUI}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,25,0,0" Padding="25">
+							<StackPanel Spacing="16">
+								<TextBlock FontSize="16" FontWeight="DemiBold"
+										   Text="{i18n:Localize ComfyUIConnection}"
+										   Margin="0,0,0,8"/>
+								<Grid ColumnDefinitions="120,*,Auto" RowDefinitions="Auto,Auto">
+									<TextBlock Text="{i18n:Localize ComfyApiUrl}" VerticalAlignment="Center"/>
+									<TextBox Grid.Column="1" Text="{Binding ComfyApiUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											 PlaceholderText="http://127.0.0.1:8188"/>
+
+									<TextBlock Grid.Row="1" Text="{i18n:Localize ComfyOutputDir}"
+											   VerticalAlignment="Center" Margin="0,8,0,0"/>
+									<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ComfyOutputDir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+											 PlaceholderText="C:\ComfyUI\output" Margin="0,8,0,0"/>
+									<Button Grid.Row="1" Grid.Column="2" Content="..."
+											Command="{Binding PickOutputDirCommand}"
+											Width="32" Height="32" Padding="0"
+											Margin="4,8,0,0" VerticalAlignment="Center"/>
+								</Grid>
+
+								<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+									<Button Content="{i18n:Localize TestConnection}"
+											Command="{Binding TestComfyConnectionCommand}"/>
+									<TextBlock Text="{Binding ComfyConnectionStatus}"
+											   VerticalAlignment="Center"
+											   FontWeight="Bold" Margin="8,0,0,0"/>
+								</StackPanel>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 3. Workspace -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize Workspace}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,25,0,0" Padding="25">
+							<StackPanel Spacing="12">
+								<TextBlock FontSize="16" FontWeight="DemiBold" Text="{i18n:Localize Workspace}" Margin="0,0,0,8"/>
+								<Grid ColumnDefinitions="120,*,Auto">
+									<TextBlock Text="{i18n:Localize WorkspaceDir}" VerticalAlignment="Center"/>
+									<TextBox Grid.Column="1" Text="{Binding WorkspaceDir, Mode=TwoWay}"
+											 PlaceholderText="E:\PromptCraftWorkspace"/>
+									<Button Grid.Column="2" Content="..." Width="32" Height="32" Padding="0"
+											Command="{Binding PickWorkspaceDirCommand}"
+											Margin="4,0,0,0" VerticalAlignment="Center"/>
+								</Grid>
+								<TextBlock Text="{i18n:Localize WorkspaceDirTip}"
+										   Foreground="Gray" FontSize="12"/>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 4. Translate Engine -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize TranslateEngine}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,25,0,0" Padding="25">
+							<StackPanel Spacing="12">
+								<TextBlock FontSize="16" FontWeight="DemiBold" Text="{i18n:Localize TranslateEngine}" Margin="0,0,0,8"/>
+								<Grid ColumnDefinitions="120,*,Auto" RowDefinitions="Auto,Auto,Auto">
+									<TextBlock Text="{i18n:Localize TranslateEngineLabel}" VerticalAlignment="Center"/>
+									<ComboBox Grid.Column="1"
+											  ItemsSource="{Binding EngineItems}"
+											  SelectedItem="{Binding TranslateEngine}"
+											  MinWidth="160"/>
+
+									<TextBlock Grid.Row="1" Text="{i18n:Localize BaiduAppId}" VerticalAlignment="Center" Margin="0,8,0,0"
+											   IsVisible="{Binding IsBaiduEngine}"/>
+									<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding BaiduAppId, Mode=TwoWay}"
+											 IsVisible="{Binding IsBaiduEngine}"
+											 PlaceholderText="{i18n:Localize BaiduAppIdPlaceholder}" Margin="0,8,0,0"/>
+
+									<TextBlock Grid.Row="2" Text="{i18n:Localize BaiduAppKey}" VerticalAlignment="Center" Margin="0,8,0,0"
+											   IsVisible="{Binding IsBaiduEngine}"/>
+									<TextBox Grid.Row="2" Grid.Column="1" Text="{Binding BaiduAppKey, Mode=TwoWay}"
+											 IsVisible="{Binding IsBaiduEngine}"
+											 PasswordChar="●"
+											 PlaceholderText="{i18n:Localize BaiduAppKeyPlaceholder}" Margin="0,8,0,0"/>
+								</Grid>
+								<TextBlock Text="{i18n:Localize TranslateEngineTip}"
+										   Foreground="Gray" FontSize="12"/>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 5. Theme: Base -->
+			<suki:SettingsLayoutItem x:Name="ThemeHeader" Header="{i18n:Localize BaseTheme}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="20">
+						<RadioButton Width="180" Height="160" Padding="0" Classes="GigaChips"
+                                     GroupName="RadioBaseTheme" IsChecked="{Binding IsLightTheme}">
+							<Border Margin="-50" Background="{DynamicResource LightTextBrush}" CornerRadius="{DynamicResource MediumCornerRadius}">
+								<Grid>
+									<TextBlock Margin="58,42,42,42" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+											   FontWeight="DemiBold" Foreground="{DynamicResource DarkTextBrush}"
+											   Text="{i18n:Localize LightMode}" />
+								</Grid>
+							</Border>
+						</RadioButton>
+						<RadioButton Width="180" Height="160" Classes="GigaChips"
+                                     GroupName="RadioBaseTheme" IsChecked="{Binding !IsLightTheme}">
+							<Border Margin="-50" Background="{DynamicResource ThemePreviewDarkBrush}" CornerRadius="{DynamicResource MediumCornerRadius}">
+								<Grid>
+									<TextBlock Margin="58,42,42,42" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+											   FontWeight="DemiBold" Foreground="{DynamicResource LightTextBrush}"
+											   Text="{i18n:Localize DarkMode}" />
+								</Grid>
+							</Border>
+						</RadioButton>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 6. Theme: Accent color -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize ColorTheme}">
+				<suki:SettingsLayoutItem.Content>
+					<Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+						<ItemsControl HorizontalAlignment="Center" ItemsSource="{Binding AvailableColors}" VerticalAlignment="Center" Grid.Column="0">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Spacing="10"/>
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="suki:SukiColorTheme">
+									<RadioButton Width="50" Height="50" Classes="GigaChips"
+												 Command="{Binding ((local:SettingModel)DataContext).SwitchToColorThemeCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type promptcraft:Setting}}}"
+												 CommandParameter="{Binding}"
+												 CornerRadius="50" GroupName="RadioColorTheme">
+										<Border Margin="-30" Background="{Binding PrimaryBrush}" CornerRadius="50"/>
+									</RadioButton>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+						<Button Grid.Column="1" Classes="Success Rounded" Command="{Binding ShowCreateCustomColorCommand}"
+								Content="{i18n:Localize CreateNew}" Width="150" VerticalAlignment="Center"/>
+					</Grid>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 7. Theme: Background -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize Background}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,25,0,0" Padding="25">
+							<StackPanel Spacing="40">
+								<DockPanel>
+									<ToggleSwitch VerticalAlignment="Top" Classes="Switch" DockPanel.Dock="Right"
+												  IsChecked="{Binding BackgroundAnimations}"/>
+									<StackPanel HorizontalAlignment="Left">
+										<TextBlock FontSize="16" FontWeight="DemiBold" Text="{i18n:Localize AnimatedBackground}" />
+										<TextBlock Margin="0,12,70,0" Foreground="{DynamicResource SukiLowText}"
+												   Text="{i18n:Localize ABDescription}" TextWrapping="Wrap"/>
+									</StackPanel>
+								</DockPanel>
+							</StackPanel>
+						</suki:GlassCard>
+						<suki:GlassCard Margin="0,45,0,0" Padding="25">
+							<StackPanel Spacing="40">
+								<DockPanel>
+									<ComboBox DockPanel.Dock="Right"
+											  ItemsSource="{Binding AvailableBackgroundStyles}"
+											  SelectedItem="{Binding BackgroundStyle}" />
+									<StackPanel HorizontalAlignment="Left">
+										<TextBlock FontSize="16" FontWeight="DemiBold" Text="{i18n:Localize BackgroundStyle}"/>
+										<TextBlock Margin="0,12,70,0" Foreground="{DynamicResource SukiLowText}"
+												   Text="{i18n:Localize BSDescription}" TextWrapping="Wrap" />
+									</StackPanel>
+								</DockPanel>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 8. Language -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize Language}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,65,0,0" Padding="25">
+							<StackPanel Spacing="40">
+								<DockPanel>
+									<ComboBox DockPanel.Dock="Right"
+											  ItemsSource="{Binding LanguageItems}"
+											  SelectedItem="{Binding CurrentLangue}"/>
+									<StackPanel HorizontalAlignment="Left">
+										<TextBlock FontSize="16" FontWeight="DemiBold" Text="{i18n:Localize Language}"/>
+										<TextBlock Margin="0,12,70,0" Foreground="{DynamicResource SukiLowText}"
+												   Text="{i18n:Localize LanguageDescription}" TextWrapping="Wrap"/>
+									</StackPanel>
+								</DockPanel>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+			<!-- 9. Log level -->
+			<suki:SettingsLayoutItem Header="{i18n:Localize LogLevelSetting}">
+				<suki:SettingsLayoutItem.Content>
+					<StackPanel>
+						<suki:GlassCard Margin="0,25,0,0" Padding="25">
+							<StackPanel Spacing="16">
+								<DockPanel>
+									<ComboBox DockPanel.Dock="Right" MinWidth="140"
+											  ItemsSource="{Binding AvailableLogLevels}"
+											  SelectedItem="{Binding SelectedLogLevel}" />
+									<StackPanel HorizontalAlignment="Left">
+										<TextBlock FontSize="16" FontWeight="DemiBold" Text="{i18n:Localize LogLevelSetting}"/>
+										<TextBlock Margin="0,12,70,0" Foreground="{DynamicResource SukiLowText}"
+												   Text="{i18n:Localize LogLevelDescription}" TextWrapping="Wrap" />
+									</StackPanel>
+								</DockPanel>
+							</StackPanel>
+						</suki:GlassCard>
+					</StackPanel>
+				</suki:SettingsLayoutItem.Content>
+			</suki:SettingsLayoutItem>
+
+		</generic:List>
+	</UserControl.Resources>
+
+	<suki:SukiStackPage Margin="20">
+		<suki:SukiStackPage.Content>
+			<suki:SettingsLayout Items="{StaticResource Collection}" />
+		</suki:SukiStackPage.Content>
+	</suki:SukiStackPage>
+</UserControl>

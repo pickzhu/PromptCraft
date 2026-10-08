@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+             d:DesignWidth="200" d:DesignHeight="150"
+             x:Class="PromptCraft.Controls.MediaVideoView"
+             mc:Ignorable="d">
+    <!-- 视频卡组件：封面首帧用普通 Image 常显在底层（随布局滚动，无 Popup 不跟随问题）；
+         VideoView 空域窗口默认隐藏，播放时显示（盖住封面输出画面），暂停保留画面，
+         停止/播完再隐藏露出封面；句柄重建由 EnsureAttached 重挂播放器 -->
+    <Panel Background="Black" ClipToBounds="True">
+        <Image x:Name="FirstFrameImage"
+               Stretch="Uniform"
+               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        <vlc:VideoView x:Name="MyVideoView"
+                       IsVisible="False"
+                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+    </Panel>
+</UserControl>

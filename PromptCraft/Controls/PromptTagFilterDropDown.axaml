@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.PromptLibrary"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="220" d:DesignHeight="80"
+             x:Class="PromptCraft.Controls.PromptTagFilterDropDown"
+             mc:Ignorable="d">
+
+    <!-- 词库标签多选筛选下拉（结构对齐 MultiSelectDropDown，类型绑定词库 PromptTagItem） -->
+    <DropDownButton Name="DropBtn" MinWidth="150">
+        <TextBlock Name="DisplayText" Text="{i18n:Localize AllTags}" FontSize="12" />
+        <DropDownButton.Flyout>
+            <Flyout Placement="BottomEdgeAlignedLeft">
+                <ListBox Name="ItemsList"
+                         Background="{DynamicResource SukiCardBackground}"
+                         BorderBrush="{DynamicResource SukiBorderBrush}"
+                         MinWidth="220" MaxHeight="280">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:PromptTagItem">
+                            <Border Background="Transparent"
+                                    PointerPressed="OnItemClick">
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="4,2">
+                                    <Border Width="10" Height="10" CornerRadius="2"
+                                            Background="{Binding Color}"
+                                            VerticalAlignment="Center" />
+                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                              IsHitTestVisible="False" />
+                                    <TextBlock Text="{Binding Name}" FontSize="12"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Flyout>
+        </DropDownButton.Flyout>
+    </DropDownButton>
+</UserControl>

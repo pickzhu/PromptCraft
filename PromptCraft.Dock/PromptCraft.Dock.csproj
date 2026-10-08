@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+	</PropertyGroup>
+	<PropertyGroup>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageDescription></PackageDescription>
+		<PackageTags>avalonia;avaloniaui;ui;theme;dock;docking</PackageTags>
+		<LangVersion>13</LangVersion>
+	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="Dock.Avalonia" />
+	  <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+	  <PackageReference Include="Dock.Model.Avalonia" />
+	  <PackageReference Include="SukiUI" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+	  <PackageReference Include="SkiaSharp" />
+	</ItemGroup>
+	<ItemGroup>
+		<AdditionalFiles Include="**\*.axaml" />
+		<AdditionalFiles Include="**\*.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+		<!-- Dock.Avalonia 12 主题由 DockFluentTheme 统一提供，旧版自定义主题文件不再编译 -->
+		<AvaloniaResource Remove="HostWindow.axaml;PinnedDockControl.axaml;ToolContentControl.axaml;DocumentControl.axaml;DocumentTabStrip.axaml;DocumentTabStripItem.axaml;ToolControl.axaml;ToolDockControl.axaml;ToolPinItemControl.axaml;ToolPinnedControl.axaml;ToolTabStrip.axaml;ToolTabStripItem.axaml;ToolChromeControl.axaml;DockTarget.axaml" />
+		<Page Remove="HostWindow.axaml;PinnedDockControl.axaml;ToolContentControl.axaml;DocumentControl.axaml;DocumentTabStrip.axaml;DocumentTabStripItem.axaml;ToolControl.axaml;ToolDockControl.axaml;ToolPinItemControl.axaml;ToolPinnedControl.axaml;ToolTabStrip.axaml;ToolTabStripItem.axaml;ToolChromeControl.axaml;DockTarget.axaml" />
+		<AvaloniaXaml Remove="HostWindow.axaml;PinnedDockControl.axaml;ToolContentControl.axaml;DocumentControl.axaml;DocumentTabStrip.axaml;DocumentTabStripItem.axaml;ToolControl.axaml;ToolDockControl.axaml;ToolPinItemControl.axaml;ToolPinnedControl.axaml;ToolTabStrip.axaml;ToolTabStripItem.axaml;ToolChromeControl.axaml;DockTarget.axaml" />
+	</ItemGroup>
+</Project>

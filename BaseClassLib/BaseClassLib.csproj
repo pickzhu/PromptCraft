@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Avalonia" />
+		<PackageReference Include="Avalonia.AvaloniaEdit" />
+		<PackageReference Include="Avalonia.Controls.ColorPicker" />
+		<PackageReference Include="Avalonia.Fonts.Inter" />
+		<PackageReference Include="Avalonia.Themes.Fluent" />
+		<PackageReference Include="AvaloniaEdit.TextMate" />
+		<PackageReference Include="AvaloniaHotMarkdown" />
+		<PackageReference Include="CommunityToolkit.Mvvm" />
+		<ProjectReference Include="..\Ke.Bee.Localization\Ke.Bee.Localization.csproj" />
+		<PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" />
+		<PackageReference Include="Material.Icons.Avalonia" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="SukiUI" />
+		<PackageReference Include="Svg.Controls.Avalonia" />
+		<PackageReference Include="System.Private.Uri" />
+		<PackageReference Include="LibVLCSharp" />
+		<PackageReference Include="VideoLAN.LibVLC.Windows">
+			<IncludeAssets>all</IncludeAssets>
+			<PrivateAssets>none</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="LibVLCSharp.Avalonia" />
+	</ItemGroup>
+	<!--<ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Material.Icons.Avalonia" />
+  </ItemGroup>-->
+
+</Project>

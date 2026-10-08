@@ -1,0 +1,267 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:controls="clr-namespace:PromptCraft.Controls"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             d:DesignWidth="1200" d:DesignHeight="800"
+             x:DataType="vm:ComfyGalleryModel"
+             x:Class="PromptCraft.Views.ComfyUI.ComfyGallery"
+             mc:Ignorable="d">
+
+    <Grid>
+        <Grid RowDefinitions="Auto,Auto,*" Margin="16" RowSpacing="8">
+
+            <!-- Row 0 -->
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                <!-- 同步按钮 -->
+                <Button Name="SyncBtn" Click="OnSyncClick"
+                        Classes="Primary" IsEnabled="{Binding !IsSyncing}"
+                        Margin="0,0,8,0">
+                    <TextBlock Name="SyncBtnText" Text="{i18n:Localize SyncNow}" />
+                </Button>
+
+                <!-- 搜索 -->
+                <TextBox Grid.Column="1" Text="{Binding SearchText}"
+                         PlaceholderText="{i18n:Localize SearchPlaceholder}"
+                         Classes="Borderless" />
+
+                <Rectangle Grid.Column="2" Width="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2,6,2" />
+
+                <!-- All/Fav/NSFW 筛选下拉 -->
+                <DropDownButton Grid.Column="3"
+                                BorderBrush="{DynamicResource SukiBorderBrush}"
+                                MinWidth="90">
+                    <TextBlock Text="{Binding FilterModeDisplay}" FontSize="12" />
+                    <DropDownButton.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <ListBox ItemsSource="{Binding FilterModes}"
+                                     SelectedIndex="{Binding FilterModeIndex, Mode=TwoWay}"
+                                     Background="{DynamicResource SukiCardBackground}"
+                                     MinWidth="130">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:FilterModeItem">
+                                        <TextBlock Text="{Binding Display}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Flyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+
+                <!-- 多选标签下拉（复用组件） -->
+                <controls:MultiSelectDropDown Grid.Column="4" Margin="6,0,0,0"
+                                               ItemsSource="{Binding AvailableTags}"
+                                               SelectedDisplayText="{Binding SelectedTagsSummary}" />
+
+                <!-- 标签管理（打开封装抽屉组件） -->
+                <Button Grid.Column="5" Content="{i18n:Localize ManageTags}"
+                        Command="{Binding OpenTagDrawerCommand}"
+                        Padding="8,4" FontWeight="DemiBold" Margin="4,0,0,0" />
+
+                <!-- 批量删除（有选中即可用；删除逻辑与单张一致，弹窗确认；红色危险色） -->
+                <Button Grid.Column="6" Content="{i18n:Localize DeleteSelected}" Command="{Binding DeleteSelectedCommand}"
+                        IsEnabled="{Binding HasSelection}"
+                        Padding="8,4" FontWeight="DemiBold" Margin="4,0,0,0"
+                        Classes="danger">
+                </Button>
+
+                <!-- 图片对比（恰好选中两张时可用） -->
+                <Button Grid.Column="7" Content="{i18n:Localize CompareSelected}" Command="{Binding CompareSelectedCommand}"
+                        IsEnabled="{Binding HasTwoSelection}"
+                        Padding="8,4" FontWeight="DemiBold" Margin="4,0,0,0" />
+
+                <!-- 选中数量提示（多选是否生效一目了然） -->
+                <TextBlock Grid.Column="8" Text="{Binding SelectionSummary}" FontSize="12"
+                           Foreground="{DynamicResource WarningTextBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+            </Grid>
+
+            <!-- Row 1: 状态行 -->
+            <TextBlock Grid.Row="1" Text="{Binding StatusMessage}" FontSize="13"
+                       Foreground="{DynamicResource SukiLowText}" />
+
+            <!-- Row 2: 缩略图网格 -->
+            <ScrollViewer Grid.Row="2" Name="ImageScrollViewer">
+                <ItemsControl ItemsSource="{Binding Images}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ImageItem">
+                            <Border CornerRadius="8" Padding="6" Margin="4" Width="170"
+                                    BorderThickness="2" PointerPressed="OnImagePointerPressed"
+                                    Classes.Selected="{Binding IsSelected}">
+                                <Border.Styles>
+                                    <Style Selector="Border">
+                                        <Setter Property="Background" Value="{DynamicResource SukiDarkColor}" />
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SukiBorderBrush}" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                    </Style>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SukiPrimaryColor}" />
+                                    </Style>
+                                    <Style Selector="Border.Selected">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                        <Setter Property="Background" Value="{DynamicResource PrimaryTintBrush}" />
+                                    </Style>
+                                </Border.Styles>
+                                <Grid>
+                                    <Border CornerRadius="4" Background="{DynamicResource PrimaryBrush}" Width="20" Height="20"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,4,4,0" IsVisible="{Binding IsSelected}">
+                                        <TextBlock Text="✓" Foreground="White" FontSize="12"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel>
+                                        <Border CornerRadius="6" ClipToBounds="True" Height="120"
+                                                Background="{DynamicResource SukiBorderBrush}">
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" Width="158" />
+                                        </Border>
+                                        <TextBlock Text="{Binding FileName}" TextWrapping="NoWrap"
+                                                   TextTrimming="CharacterEllipsis" MaxWidth="158"
+                                                   FontSize="12" Margin="0,6,0,2"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding DimensionsDisplay}" FontSize="10" Foreground="Gray"/>
+                                            <TextBlock Text="{Binding FileSizeDisplay}" FontSize="10" Foreground="Gray"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,0">
+                                            <TextBlock Text="♥" FontSize="10" Foreground="Gold"
+                                                       IsVisible="{Binding IsFavorite}" />
+                                            <Border CornerRadius="3" Background="{DynamicResource NsfwBrush}" Padding="3,0"
+                                                    IsVisible="{Binding IsNsfw}">
+                                                <TextBlock Text="N" FontSize="8" Foreground="White" />
+                                            </Border>
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding Tags}" Margin="0,2,0,0">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:TagDisplay">
+                                                    <Border CornerRadius="3" Background="{Binding Color}" Padding="4,1"
+                                                            Margin="1" MaxWidth="70">
+                                                        <TextBlock Text="{Binding Name}" FontSize="9" Foreground="White"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- 图片右键菜单（手动 Popup：右键按下瞬间定位在指针处，避免按住拖动时菜单位置漂移；偏移清零防漂移） -->
+        <Popup x:Name="ImageContextPopup" Placement="Pointer" IsLightDismissEnabled="True"
+               HorizontalOffset="0" VerticalOffset="0">
+            <Border CornerRadius="6" Background="{DynamicResource SukiCardBackground}"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1"
+                    BoxShadow="0 4 14 #55000000">
+                <StackPanel MinWidth="196">
+                    <!-- 标题：已选 N 张（右键时由 code-behind 更新） -->
+                    <TextBlock x:Name="ContextTitle" FontSize="11" Foreground="{DynamicResource SukiLowText}"
+                               Padding="16,8,16,4" />
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+
+                    <!-- 收藏 / NSFW / 打标签 -->
+                    <Button x:Name="ContextFavBtn" Content="{i18n:Localize Favorite}" Click="OnToggleFavoriteMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button x:Name="ContextNsfwBtn" Content="{i18n:Localize FilterNsfw}" Click="OnToggleNsfwMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize BatchTag}" Click="OnBatchTagMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                    <!-- 加入文件夹（多选时批量加入，弹窗多选文件夹） -->
+                    <Button Content="{i18n:Localize AddToFolder}" Click="OnAddToFolderMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+
+                    <!-- 对比（恰好选中两张时可用，右键时由 code-behind 更新 IsEnabled） -->
+                    <Button x:Name="CompareContextBtn" Content="{i18n:Localize CompareSelectedImages}" Click="OnCompareMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                    <!-- 打开文件夹 / 复制路径 -->
+                    <Button Content="{i18n:Localize OpenFolder}" Click="OnOpenFolderMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize CopyFilePath}" Click="OnCopyPathMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+
+                    <!-- 删除（危险操作，红色） -->
+                    <Button Content="{i18n:Localize DeleteSelectedMenu}" Click="OnDeleteMenuItemClick" Foreground="{DynamicResource DangerBrush}"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource DangerTintBrush}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- 标签管理抽屉（封装组件：新建/重命名/删除统一实现，变更后自动刷新本页下拉） -->
+        <controls:TagManagerDrawer DataContext="{Binding TagDrawer}" />
+    </Grid>
+</UserControl>

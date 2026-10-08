@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:PeEditorModel"
+             x:Class="PromptCraft.PeEditorView"
+             d:DesignWidth="720" d:DesignHeight="640"
+             mc:Ignorable="d">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.form-label">
+            <Setter Property="FontWeight" Value="DemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,2,0,4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10">
+            <TextBlock Text="{Binding EditorTitle}" FontSize="16" FontWeight="Bold"/>
+
+            <!-- 分类（单选，对齐 radio-group） -->
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="{i18n:Localize PeColCategory}" Width="96" Classes="form-label" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <RadioButton GroupName="peEditorKind" Content="{i18n:Localize KindExpand}" IsChecked="{Binding IsEditorKindExpand}"/>
+                    <RadioButton GroupName="peEditorKind" Content="{i18n:Localize KindReverse}" IsChecked="{Binding IsEditorKindReverse}"/>
+                    <RadioButton GroupName="peEditorKind" Content="{i18n:Localize KindTrain}" IsChecked="{Binding IsEditorKindTrain}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- 名称（必填） -->
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Text="{i18n:Localize PeColName}" Classes="form-label" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding EditorName}" PlaceholderText="{i18n:Localize PeEditorNamePlaceholder}"
+                         VerticalContentAlignment="Top"/>
+            </Grid>
+
+            <!-- 输出格式（必填，随分类联动） -->
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Text="{i18n:Localize PeColOutputFormat}" Classes="form-label" VerticalAlignment="Center"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding EditorOutputFormatOptions}"
+                          SelectedItem="{Binding EditorOutputFormatOption}"
+                          DisplayMemberBinding="{Binding Label}"/>
+            </Grid>
+
+            <!-- 系统提示词（必填，textarea 6 行） -->
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Text="{i18n:Localize PeSysPromptLabel}" Classes="form-label"/>
+                <TextBox Grid.Column="1" Text="{Binding EditorSystemPrompt}" PlaceholderText="{Binding EditorSystemPlaceholder}"
+                         AcceptsReturn="True" TextWrapping="Wrap" Height="132" VerticalContentAlignment="Top"/>
+            </Grid>
+
+            <!-- 用户提示词（选填，textarea 8 行） -->
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Text="{i18n:Localize PeUserPromptLabel}" Classes="form-label"/>
+                <TextBox Grid.Column="1" Text="{Binding EditorUserPrompt}" PlaceholderText="{Binding EditorUserPlaceholder}"
+                         AcceptsReturn="True" TextWrapping="Wrap" Height="176" VerticalContentAlignment="Top"/>
+            </Grid>
+
+            <!-- 备注（选填，textarea 2 行） -->
+            <Grid ColumnDefinitions="96,*">
+                <TextBlock Text="{i18n:Localize PeColDescription}" Classes="form-label"/>
+                <TextBox Grid.Column="1" Text="{Binding EditorDescription}" PlaceholderText="{i18n:Localize PeOptionalPlaceholder}"
+                         AcceptsReturn="True" TextWrapping="Wrap" Height="64" VerticalContentAlignment="Top"/>
+            </Grid>
+
+            <!-- 校验/保存错误提示（红字） -->
+            <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" IsVisible="{Binding HasStatus}"
+                       Foreground="{DynamicResource DangerSoftTextBrush}" FontSize="13"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

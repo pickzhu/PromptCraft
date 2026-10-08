@@ -1,0 +1,111 @@
+<!--
+    全局通用组件类（Classes 统一控制样式）：
+    页面内不得再内联重复的按钮/标签/遮罩/文字样式，统一使用本文件中的 Class。
+    颜色一律引用 AppColors.axaml 中的资源。
+-->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 实心主按钮（品牌蓝；hover/pressed 逐级加深） -->
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}"/>
+    </Style>
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="{DynamicResource PrimaryPressedBrush}"/>
+    </Style>
+    <Style Selector="Button.primary:disabled">
+        <Setter Property="Background" Value="{DynamicResource SukiLowText}"/>
+    </Style>
+
+    <!-- 实心危险按钮（红；hover/pressed 逐级加深） -->
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{DynamicResource DangerBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.danger:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DangerHoverBrush}"/>
+    </Style>
+    <Style Selector="Button.danger:pressed">
+        <Setter Property="Background" Value="{DynamicResource DangerPressedBrush}"/>
+    </Style>
+    <Style Selector="Button.danger:disabled">
+        <Setter Property="Background" Value="{DynamicResource DangerDisabledBrush}"/>
+    </Style>
+
+    <!-- 次要说明文字（灰） -->
+    <Style Selector="TextBlock.text-muted">
+        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}"/>
+    </Style>
+
+    <!-- 半透明 chip 标签（白底变体：浅 / 更浅） -->
+    <Style Selector="Border.chip-light">
+        <Setter Property="Background" Value="{DynamicResource ChipWhiteBrush}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="6,1"/>
+    </Style>
+    <Style Selector="Border.chip-thin">
+        <Setter Property="Background" Value="{DynamicResource ChipWhiteThinBrush}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+
+    <!-- 半透明 chip 标签（深底变体） -->
+    <Style Selector="Border.chip-dark">
+        <Setter Property="Background" Value="{DynamicResource ChipDarkBrush}"/>
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Padding" Value="5,1"/>
+    </Style>
+
+    <!-- 全屏遮罩（按浓度分级） -->
+    <Style Selector="Border.overlay-light">
+        <Setter Property="Background" Value="{DynamicResource OverlayLightBrush}"/>
+    </Style>
+    <Style Selector="Border.overlay-medium">
+        <Setter Property="Background" Value="{DynamicResource OverlayMediumBrush}"/>
+    </Style>
+    <Style Selector="Border.overlay-heavy">
+        <Setter Property="Background" Value="{DynamicResource OverlayHeavyBrush}"/>
+    </Style>
+    <Style Selector="Border.overlay-solid">
+        <Setter Property="Background" Value="{DynamicResource OverlaySolidBrush}"/>
+    </Style>
+    <Style Selector="Border.overlay-black">
+        <Setter Property="Background" Value="{DynamicResource OverlayBlackBrush}"/>
+    </Style>
+
+    <!-- 深色面板 -->
+    <Style Selector="Border.panel-dark">
+        <Setter Property="Background" Value="{DynamicResource PanelDarkBrush}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Border.panel-darker">
+        <Setter Property="Background" Value="{DynamicResource PanelDarkerBrush}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+
+    <!-- 蓝色标签按钮（Tag 管理选中态） -->
+    <Style Selector="Button.tag-primary">
+        <Setter Property="Background" Value="{DynamicResource TagBlueBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource TagBlueBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.tag-danger">
+        <Setter Property="Foreground" Value="{DynamicResource DangerAltBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerAltBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+</Styles>

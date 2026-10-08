@@ -1,0 +1,153 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             d:DesignWidth="380" d:DesignHeight="600"
+             x:DataType="vm:TagManagerDrawerModel"
+             x:Class="PromptCraft.Controls.TagManagerDrawer"
+             mc:Ignorable="d">
+
+    <!-- 标签管理抽屉组件：遮罩 + 右侧面板，供图库 / 工作流页复用。
+         所有交互逻辑在 TagManagerDrawerModel（命令绑定），宿主仅需放入组件并绑定 DataContext。 -->
+    <Grid>
+        <!-- 遮罩 -->
+        <Border Name="DrawerOverlay" IsVisible="{Binding IsOpen}"
+                Background="{DynamicResource OverlayMediumBrush}" PointerPressed="OnOverlayClick"
+                IsHitTestVisible="True" />
+
+        <!-- 右侧抽屉 -->
+        <Border Name="TagDrawer" Width="380" HorizontalAlignment="Right"
+                Background="{DynamicResource SukiCardBackground}" IsVisible="{Binding IsOpen}"
+                Padding="16" BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1,0,0,0"
+                BoxShadow="-4 0 10 #66000000">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" RowSpacing="10">
+                <!-- 标题 + 副标题 -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel>
+                        <TextBlock Text="{i18n:Localize TagManager}" FontSize="16" FontWeight="DemiBold" />
+                        <TextBlock Text="{i18n:Localize TagManagerDescription}" FontSize="11" Foreground="Gray"
+                                   Margin="0,3,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="✕" Width="28" Height="28" Padding="0"
+                            FontSize="14" VerticalAlignment="Top" Command="{Binding CloseCommand}"
+                            BorderThickness="0" Background="Transparent" />
+                </Grid>
+
+                <!-- 分区：新建标签 -->
+                <TextBlock Grid.Row="1" Text="{i18n:Localize NewTagSection}" FontSize="13" FontWeight="DemiBold"
+                           Margin="0,6,0,0" />
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Text="{Binding NewTagName, Mode=TwoWay}"
+                                 PlaceholderText="{i18n:Localize NewTagPlaceholder}"
+                                 Classes="Borderless" MaxLength="40" KeyDown="OnNewTagKeyDown" />
+                        <TextBlock Grid.Column="1" Text="{Binding NewTagCounter}" FontSize="11"
+                                   Foreground="Gray" VerticalAlignment="Center" Margin="8,0,0,0" />
+                    </Grid>
+                    <Button Grid.Column="1" Content="{i18n:Localize AddTag}" Height="32" Padding="14,0"
+                            FontSize="13" FontWeight="DemiBold" Command="{Binding AddTagCommand}"
+                            Background="{DynamicResource TagBlueBrush}" Foreground="White" BorderBrush="{DynamicResource TagBlueBrush}"
+                            CornerRadius="4" />
+                </Grid>
+
+                <!-- 分区：已有标签 -->
+                <TextBlock Grid.Row="3" Text="{i18n:Localize ExistingTagsSection}" FontSize="13" FontWeight="DemiBold"
+                           Margin="0,6,0,0" />
+                <ScrollViewer Grid.Row="4" Margin="0,4,0,0">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding Tags}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TagEditItem">
+                                    <Border Margin="0,2" Padding="8,6" CornerRadius="4"
+                                            BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1"
+                                            Background="{DynamicResource SukiCardBackground}">
+                                        <Border.Styles>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource SukiBorderBrush}" />
+                                                <Setter Property="BorderBrush" Value="{DynamicResource SukiPrimaryColor}" />
+                                                <Setter Property="BorderThickness" Value="1.5" />
+                                            </Style>
+                                        </Border.Styles>
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+                                            <Border CornerRadius="3" Background="{Binding Color}" Padding="4,2"
+                                                    VerticalAlignment="Center" MaxWidth="160" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Name}" FontSize="12" Foreground="White"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding UsageCount}"
+                                                       FontSize="11" Foreground="Gray" VerticalAlignment="Center"
+                                                       Margin="0,0,4,0" />
+                                            <Button Grid.Column="2" Content="✏" Width="24" Height="24" Padding="0"
+                                                    FontSize="11" Command="{Binding $parent[ItemsControl].DataContext.EditTagCommand}"
+                                                    CommandParameter="{Binding}" CornerRadius="4" />
+                                            <Button Grid.Column="3" Content="✕" Width="24" Height="24" Padding="0"
+                                                    FontSize="11" Command="{Binding $parent[ItemsControl].DataContext.DeleteTagCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Foreground="{DynamicResource DangerAltBrush}" BorderBrush="{DynamicResource DangerAltBrush}" BorderThickness="1">
+                                                <!-- 自定义模板：绕开 SukiUI/Fluent 主题按钮模板，保证 hover 红底不被主题覆盖 -->
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Name="BtnBorder" CornerRadius="4" Padding="0"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <Border.Transitions>
+                                                                <Transitions>
+                                                                    <BrushTransition Property="Background" Duration="0:0:0.12" />
+                                                                    <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+                                                                </Transitions>
+                                                            </Border.Transitions>
+                                                            <ContentPresenter Name="BtnContent"
+                                                                              Content="{TemplateBinding Content}"
+                                                                              FontSize="{TemplateBinding FontSize}"
+                                                                              Foreground="{TemplateBinding Foreground}"
+                                                                              HorizontalAlignment="Center"
+                                                                              VerticalAlignment="Center" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                                <Button.Styles>
+                                                    <Style Selector="Button:pointerover /template/ Border#BtnBorder">
+                                                        <Setter Property="Background" Value="{DynamicResource DangerAltBrush}" />
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource DangerAltBrush}" />
+                                                    </Style>
+                                                    <Style Selector="Button:pointerover /template/ ContentPresenter#BtnContent">
+                                                        <Setter Property="Foreground" Value="White" />
+                                                    </Style>
+                                                </Button.Styles>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- 状态行 -->
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="12"
+                                   Foreground="{DynamicResource SukiLowText}" Margin="0,8,0,0"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <Grid.Styles>
+            <Style Selector="Border#TagDrawer">
+                <Setter Property="Transitions">
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0.2" />
+                    </Transitions>
+                </Setter>
+            </Style>
+            <Style Selector="Border#DrawerOverlay">
+                <Setter Property="Transitions">
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0.2" />
+                    </Transitions>
+                </Setter>
+            </Style>
+        </Grid.Styles>
+    </Grid>
+</UserControl>

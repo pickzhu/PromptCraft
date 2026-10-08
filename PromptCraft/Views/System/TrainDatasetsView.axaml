@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:views="using:PromptCraft"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:TrainDatasetsViewModel"
+             x:Class="PromptCraft.TrainDatasetsView"
+             x:Name="Root"
+             d:DesignWidth="1600" d:DesignHeight="960"
+             mc:Ignorable="d">
+
+    <Grid Margin="14">
+
+        <!-- ==================== 列表页 ==================== -->
+        <Grid IsVisible="{Binding !IsDetailView}">
+            <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+
+                <!-- 顶部 -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="primary" Command="{Binding NewCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <material:MaterialIcon Kind="Plus"/>
+                            <TextBlock Text="{i18n:Localize TrainNewButton}"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- 搜索 -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <TextBox Text="{Binding SearchText}" PlaceholderText="{i18n:Localize TrainSearchDatasetsPlaceholder}" VerticalContentAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding CountLabel}" VerticalAlignment="Center" Opacity="0.8"/>
+                    <Border Grid.Column="2" CornerRadius="4" Padding="8,4" VerticalAlignment="Center"
+                            Background="{DynamicResource TableRowAltBrush}">
+                        <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Opacity="0.85"/>
+                    </Border>
+                </Grid>
+
+                <!-- 数据集列表 -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel ItemWidth="320"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TrainDatasetRow">
+                                <suki:GlassCard Margin="2,2,6,6" Padding="14">
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <material:MaterialIcon Kind="Database" Opacity="0.7"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" CornerRadius="4" Padding="8,1" VerticalAlignment="Center"
+                                                    Background="{DynamicResource ChipGreyBrush}">
+                                                <TextBlock Text="{Binding ModeLabel}" FontSize="11"/>
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Text="{Binding LocalPath}" FontSize="11" Opacity="0.55" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding LocalPath}"/>
+                                        <TextBlock FontSize="12" Opacity="0.8">
+                                            <Run Text="{Binding TotalCount, StringFormat='{}{0} 个素材 · '}"/>
+                                            <Run Text="{Binding ImageCount, StringFormat='{}{0} 图'}"/>
+                                            <Run Text="{Binding VideoCount, StringFormat=' · {}{0} 视频'}"/>
+                                        </TextBlock>
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+                                            <Button Grid.Column="1" Padding="6,2" Command="{Binding #Root.DataContext.OpenDatasetCommand}" CommandParameter="{Binding}">
+                                                <TextBlock Text="{i18n:Localize TrainEnterLabel}" FontSize="12"/>
+                                            </Button>
+                                            <Button Grid.Column="2" Padding="6,2" Command="{Binding #Root.DataContext.RenameCommand}" CommandParameter="{Binding}">
+                                                <TextBlock Text="{i18n:Localize TrainRenameAction}" FontSize="12"/>
+                                            </Button>
+                                            <Button Grid.Column="3" Padding="6,2" Command="{Binding #Root.DataContext.DeleteCommand}" CommandParameter="{Binding}">
+                                                <TextBlock Text="{i18n:Localize PeDeleteAction}" FontSize="12" Foreground="{DynamicResource DangerSoftTextBrush}"/>
+                                            </Button>
+                                        </Grid>
+                                        <Button HorizontalAlignment="Left" Padding="4,1" Command="{Binding #Root.DataContext.OpenFolderCommand}" CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <material:MaterialIcon Kind="FolderOpen"/>
+                                                <TextBlock Text="{i18n:Localize TrainOpenFolderLabel}" FontSize="12"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </suki:GlassCard>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- ==================== 详情子页 ==================== -->
+        <ContentControl IsVisible="{Binding IsDetailView}" Content="{Binding Detail}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate x:DataType="vm:TrainDatasetDetailViewModel">
+                    <views:TrainDatasetDetailView/>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
+    </Grid>
+</UserControl>

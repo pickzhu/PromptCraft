@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vlc="using:LibVLCSharp.Avalonia"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="220" d:DesignHeight="80"
+             x:Class="PromptCraft.VideoItemView"
+             mc:Ignorable="d">
+
+    <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Margin="5" Padding="5" Background="#1e1e1e">
+        <Grid RowDefinitions="*, Auto">
+            <!-- ��Ƶ�ӿ� -->
+            <Panel Grid.Row="0" MinHeight="200" Background="Black">
+                <vlc:VideoView x:Name="MyVideoView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+
+                <!-- �� Popup ����ԭ�����ڸ��� VideoView����ʾ��һ֡ -->
+                <Popup x:Name="FirstFramePopup"
+                       PlacementTarget="{Binding #MyVideoView}"
+                       Placement="Center"
+                       IsLightDismissEnabled="False"
+                       IsOpen="False">
+                    <Border Width="{Binding #MyVideoView.Bounds.Width}"
+                            Height="{Binding #MyVideoView.Bounds.Height}"
+                            Background="Black">
+                        <Image x:Name="FirstFrameImage"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                    </Border>
+                </Popup>
+            </Panel>
+
+            <!-- �����Ŀ��ư�ť -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5" Spacing="10">
+                <Button Content="Play/Pause" Click="OnPauseClicked" HotKey="Space"/>
+                <Button Content="Stop" Click="OnStopClicked" />
+                <Button Content="Remove" Click="OnRemoveClicked" Background="DarkRed" Foreground="White"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

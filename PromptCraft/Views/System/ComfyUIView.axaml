@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:web="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.WebView"
+             d:DesignWidth="1200" d:DesignHeight="800"
+             x:DataType="vm:ComfyUIViewModel"
+             x:Class="PromptCraft.ComfyUIView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,*" Margin="0" RowSpacing="0">
+
+        <!-- 工具条：首页 / 刷新 / 地址栏 / 前往 -->
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8" IsVisible="False">
+            <Button Grid.Column="0" Classes="Primary" Command="{Binding HomeCommand}" Padding="14,6"
+                    ToolTip.Tip="{i18n:Localize ComfyUIHomeTip}">
+                <TextBlock Text="{i18n:Localize ComfyUIHome}"/>
+            </Button>
+            <Button Grid.Column="1" Classes="Primary" Command="{Binding RefreshCommand}" Padding="14,6"
+                    ToolTip.Tip="{i18n:Localize ComfyUIRefreshTip}">
+                <TextBlock Text="{i18n:Localize ComfyUIRefresh}"/>
+            </Button>
+            <TextBox Grid.Column="2"
+                     Text="{Binding CurrentUrl}"
+                     KeyDown="OnAddressKeyDown"
+                     PlaceholderText="{i18n:Localize ComfyUIAddressPlaceholder}"
+                     Classes="Borderless"
+                     VerticalContentAlignment="Center"/>
+            <Button Grid.Column="3" Classes="accent" Command="{Binding GoCommand}" Padding="16,6"
+                    ToolTip.Tip="{i18n:Localize ComfyUIGoTip}">
+                <TextBlock Text="{i18n:Localize ComfyUIGo}"/>
+            </Button>
+        </Grid>
+
+        <!-- 内嵌 ComfyUI（NativeWebView，Windows 走 WebView2 / macOS WebKit / Linux 需改用 NativeWebDialog） -->
+        <web:NativeWebView x:Name="WebView" Grid.Row="1"/>
+    </Grid>
+</UserControl>

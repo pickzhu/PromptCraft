@@ -1,0 +1,34 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:PeImportModel"
+             x:Class="PromptCraft.PeImportView"
+             d:DesignWidth="560" d:DesignHeight="360"
+             mc:Ignorable="d">
+
+    <StackPanel Spacing="12">
+        <TextBlock Text="{i18n:Localize PeImportDialogTitle}" FontSize="16" FontWeight="Bold"/>
+        <TextBlock Text="{Binding ImportHint}" TextWrapping="Wrap" Opacity="0.8"/>
+
+        <Border BorderBrush="{DynamicResource BorderDashedBrush}" BorderThickness="1" CornerRadius="8"
+                Padding="20" Background="{DynamicResource ChipWhiteFaintBrush}">
+            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                <material:MaterialIcon Kind="FileUpload" HorizontalAlignment="Center"/>
+                <TextBlock Text="{i18n:Localize PeDragJsonHere}" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding ImportFileName}" HorizontalAlignment="Center" Opacity="0.8" FontSize="12"/>
+                <Button Command="{Binding PickImportFileCommand}" HorizontalAlignment="Center" Margin="0,4,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <material:MaterialIcon Kind="FolderOpen"/>
+                        <TextBlock Text="{i18n:Localize PeChooseFileLabel}"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Text="{Binding ImportMessage}" TextWrapping="Wrap" FontSize="13" Opacity="0.9"/>
+    </StackPanel>
+</UserControl>

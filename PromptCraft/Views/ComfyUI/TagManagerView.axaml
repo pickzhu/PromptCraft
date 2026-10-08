@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             d:DesignWidth="500" d:DesignHeight="500"
+             x:DataType="vm:TagManagerModel"
+             x:Class="PromptCraft.Views.ComfyUI.TagManagerView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="12" RowSpacing="8">
+        <!-- 添加新标签 -->
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBox Text="{Binding NewTagName}" PlaceholderText="New tag name..."
+                     Classes="Borderless" />
+            <Button Grid.Column="1" Content="+" Command="{Binding AddTagCommand}"
+                    Width="32" Height="32" Padding="0" Margin="8,0,0,0"
+                    FontSize="18" FontWeight="Bold" />
+        </Grid>
+
+        <!-- 标签列表 -->
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Tags}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:TagEditItem">
+                        <Border Margin="0,2" Padding="8,6" CornerRadius="4"
+                                Background="{DynamicResource SukiBorderBrush}">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+                                <!-- 标签颜色色块（保存的 Tags.Color） -->
+                                <Border Width="12" Height="12" CornerRadius="3"
+                                        Background="{Binding Color}"
+                                        VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Text="{Binding Name}" Classes="Borderless"
+                                         FontSize="13" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="2" Text="{Binding UsageCount}"
+                                           FontSize="11" Foreground="Gray" VerticalAlignment="Center"
+                                           Margin="0,0,4,0" />
+                                <Button Grid.Column="3" Content="✕" Width="24" Height="24" Padding="0"
+                                        FontSize="11" Command="{Binding $parent[ItemsControl].DataContext.DeleteTagCommand}"
+                                        CommandParameter="{Binding}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- 状态行 -->
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" FontSize="12"
+                   Foreground="{DynamicResource SukiLowText}" />
+    </Grid>
+</UserControl>

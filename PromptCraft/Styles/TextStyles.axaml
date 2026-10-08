@@ -1,0 +1,23 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="StackPanel.HeaderContent">
+        <Setter Property="Spacing" Value="5" />
+        <Style Selector="^ &gt; TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+    </Style>
+
+    <!-- 属性块标题（表单分区标题：DemiBold + 13px + 上下留白；Expand / ReverseCaption 等页面共用） -->
+    <Style Selector="TextBlock.form-label">
+        <Setter Property="FontWeight" Value="DemiBold"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Margin" Value="0,2,0,4"/>
+    </Style>
+
+    <!-- 表单提示文字（次要说明：12px + 半透明 + 自动换行） -->
+    <Style Selector="TextBlock.hint">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Opacity" Value="0.7"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+</Styles>

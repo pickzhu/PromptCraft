@@ -1,0 +1,393 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:TrainDatasetDetailViewModel"
+             x:Class="PromptCraft.TrainDatasetDetailView"
+             x:Name="Root"
+             d:DesignWidth="1600" d:DesignHeight="960"
+             mc:Ignorable="d">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.form-label">
+            <Setter Property="FontWeight" Value="DemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,6,0,4"/>
+        </Style>
+        <!-- 素材卡：选中态（Primary 描边）+ 鼠标移入态（PrimaryTint 描边），对齐 PromptMaster 选中高亮 -->
+        <Style Selector="Border.media-card">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.media-card:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryTintBrush}"/>
+        </Style>
+        <Style Selector="Border.media-card.media-selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid Margin="14" RowDefinitions="Auto,Auto,*" RowSpacing="8">
+
+        <!-- ==================== 顶部行 1：返回 + 标题 + 状态 ==================== -->
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <Button Command="{Binding BackCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <material:MaterialIcon Kind="ArrowLeft"/>
+                    <TextBlock Text="{i18n:Localize TrainBackLabel}"/>
+                </StackPanel>
+            </Button>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="{Binding DatasetName}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+                <Border CornerRadius="4" Padding="8,1" VerticalAlignment="Center"
+                        Background="{DynamicResource ChipBlueBrush}">
+                    <TextBlock Text="{Binding ModeLabel}" FontSize="12" Foreground="White"/>
+                </Border>
+            </StackPanel>
+            <Border Grid.Column="2" CornerRadius="4" Padding="8,4" VerticalAlignment="Center"
+                    Background="{DynamicResource TableRowAltBrush}"
+                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" Opacity="0.85" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+
+        <!-- ==================== 顶部行 2：搜索框在左（占剩余空间），功能按钮在右（对齐 PromptMaster header） ==================== -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="6">
+            <!-- 搜索素材（最左，弹性宽度） -->
+            <TextBox Text="{Binding SearchText}" PlaceholderText="{i18n:Localize TrainSearchPlaceholder}"
+                     Height="34" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+            <!-- 开始打标：有选中时自动变"打标选中 (N)" -->
+            <Button Grid.Column="1" Classes="primary" Command="{Binding StartCaptionCommand}" IsEnabled="{Binding !IsRunning}" IsVisible="{Binding !IsRunning}">
+                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                    <material:MaterialIcon Kind="Play"/>
+                    <TextBlock Text="{Binding StartButtonText}"/>
+                </StackPanel>
+            </Button>
+            <!-- 停止打标（运行中显示） -->
+            <Button Grid.Column="2" Classes="danger" Command="{Binding StopCaptionCommand}" IsVisible="{Binding IsRunning}">
+                <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                    <material:MaterialIcon Kind="Stop"/>
+                    <TextBlock Text="{i18n:Localize TrainStopLabel}"/>
+                </StackPanel>
+            </Button>
+            <!-- 统一打标 -->
+            <Button Grid.Column="3" Classes="warning" Command="{Binding OpenUniformCommand}" IsEnabled="{Binding HasItems}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <material:MaterialIcon Kind="TagTextOutline"/>
+                    <TextBlock Text="{i18n:Localize TrainUniformLabel}"/>
+                </StackPanel>
+            </Button>
+            <!-- 添加素材（目录扫描模式隐藏） -->
+            <Button Grid.Column="4" Command="{Binding AddImagesCommand}" IsVisible="{Binding !IsScanPath}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <material:MaterialIcon Kind="Plus"/>
+                    <TextBlock Text="{i18n:Localize TrainAddImagesLabel}"/>
+                </StackPanel>
+            </Button>
+            <!-- 导入文件夹（目录扫描模式隐藏） -->
+            <Button Grid.Column="5" Command="{Binding ImportFolderCommand}" IsVisible="{Binding !IsScanPath}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <material:MaterialIcon Kind="FolderPlus"/>
+                    <TextBlock Text="{i18n:Localize TrainImportFolderLabel}"/>
+                </StackPanel>
+            </Button>
+            <!-- 删除选中(N)（目录扫描模式隐藏） -->
+            <Button Grid.Column="6" Command="{Binding DeleteSelectedCommand}" IsEnabled="{Binding HasSelection}"
+                    IsVisible="{Binding !IsScanPath}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <material:MaterialIcon Kind="DeleteOutline"/>
+                    <TextBlock Text="{i18n:Localize TrainDeleteSelectedLabel}"/>
+                    <TextBlock Text="{Binding SelectedCount, StringFormat='({0})'}" IsVisible="{Binding HasSelection}"/>
+                </StackPanel>
+            </Button>
+            <!-- 打开文件夹 -->
+            <Button Grid.Column="7" Command="{Binding OpenFolderCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <material:MaterialIcon Kind="FolderOpen"/>
+                    <TextBlock Text="{i18n:Localize TrainOpenFolderLabel}"/>
+                </StackPanel>
+            </Button>
+            <!-- 刷新 -->
+            <Button Grid.Column="8" Command="{Binding RefreshCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <material:MaterialIcon Kind="Refresh"/>
+                    <TextBlock Text="{i18n:Localize TrainRefreshLabel}"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- ==================== 主体：左参数 / 右素材+日志 ==================== -->
+        <Grid Grid.Row="2" ColumnDefinitions="352,*" ColumnSpacing="12">
+
+            <!-- 左：打标参数 -->
+            <suki:GlassCard Grid.Column="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="2" Margin="14">
+
+                        <!-- 打标对象 -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainMediaTargetLabel}"/>
+                        <ComboBox ItemsSource="{Binding MediaTargetItems}" SelectedItem="{Binding SelectedMediaTarget}"
+                                  DisplayMemberBinding="{Binding Label}" HorizontalAlignment="Stretch"/>
+
+                        <!-- 提示词工程（train，仅启用） -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainPeLabel}"/>
+                        <ComboBox ItemsSource="{Binding PeProfiles}" SelectedItem="{Binding SelectedPe}"
+                                  DisplayMemberBinding="{Binding Name}" HorizontalAlignment="Stretch"/>
+                        <TextBlock Text="{Binding OutputFormatLabel}" FontSize="12" Opacity="0.7" Margin="0,2,0,0"/>
+
+                        <!-- 输出语言（中文 / English） -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainLangLabel}"/>
+                        <ComboBox ItemsSource="{Binding LangItems}" SelectedItem="{Binding SelectedLang}"
+                                  DisplayMemberBinding="{Binding Label}" HorizontalAlignment="Stretch"/>
+
+                        <!-- 提示词长度 -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainLengthLabel}"/>
+                        <ComboBox ItemsSource="{Binding LengthItems}" SelectedItem="{Binding SelectedLength}"
+                                  DisplayMemberBinding="{Binding Label}" HorizontalAlignment="Stretch"/>
+                        <TextBox Text="{Binding CustomLenChars}" IsVisible="{Binding IsCustomLen}" Margin="0,4,0,0"
+                                 PlaceholderText="{i18n:Localize LengthCustomWatermark}"/>
+
+                        <!-- 打标模型（服务商两级：打标模型=服务商 → 服务商模型=具体模型，对齐 PromptMaster） -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainModelLabel}"/>
+                        <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}"
+                                  DisplayMemberBinding="{Binding Name}" HorizontalAlignment="Stretch"/>
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainProviderModelLabel}"/>
+                        <ComboBox ItemsSource="{Binding SelectedProvider.Models}" SelectedItem="{Binding SelectedModel}"
+                                  DisplayMemberBinding="{Binding ModelName}" HorizontalAlignment="Stretch"
+                                  PlaceholderText="{Binding ProviderModelPlaceholder}"/>
+                        <!-- 服务商模型空态提示 + 去配置（对齐 PromptMaster pm-online-model-hint；两列布局避免按钮裁切） -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,4,0,0"
+                              IsVisible="{Binding !HasProviderModels}">
+                            <TextBlock Grid.Column="0" Text="{Binding ProviderModelEmptyText}" FontSize="12" Opacity="0.8"
+                                       TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Classes="accent" Command="{Binding GoSettingsCommand}" Padding="8,2" VerticalAlignment="Center">
+                                <TextBlock Text="{i18n:Localize TrainGoSettingsLabel}" FontSize="12"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- 打标文件格式 -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainFileFormatLabel}"/>
+                        <ComboBox ItemsSource="{Binding CaptionFileFormatItems}" SelectedItem="{Binding SelectedCaptionFileFormat}"
+                                  DisplayMemberBinding="{Binding Label}" HorizontalAlignment="Stretch" MinWidth="90"/>
+
+                        <!-- 素材来源 -->
+                        <TextBlock Classes="form-label" Text="{i18n:Localize TrainModeLabel}"/>
+                        <ComboBox ItemsSource="{Binding ModeItems}" SelectedItem="{Binding SelectedMode}"
+                                  DisplayMemberBinding="{Binding Label}" HorizontalAlignment="Stretch"/>
+
+                        <!-- 目录扫描设置（覆盖已有打标 + 递归扫描子目录 均在此，CheckBox 形态对齐 PromptMaster） -->
+                        <StackPanel IsVisible="{Binding IsScanPath}">
+                            <TextBlock Classes="form-label" Text="{i18n:Localize TrainScanRootLabel}"/>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                <TextBox Grid.Column="0" Text="{Binding ScanPathRoot}" IsReadOnly="True" PlaceholderText="{i18n:Localize TrainScanRootWatermark}"/>
+                                <Button Grid.Column="1" Command="{Binding PickScanRootCommand}">
+                                    <material:MaterialIcon Kind="FolderOpen"/>
+                                </Button>
+                            </Grid>
+                            <CheckBox IsChecked="{Binding ScanRecursive}" Content="{i18n:Localize TrainScanRecursiveLabel}" Margin="0,8,0,0"/>
+                            <CheckBox IsChecked="{Binding OverwriteSidecar}" Content="{i18n:Localize TrainOverwriteLabel}" Margin="0,4,0,0"/>
+                            <TextBlock Text="{Binding ScanSummary}" FontSize="12" Opacity="0.75" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <!-- 更多设置（对齐 PromptMaster：附加要求规则 / 自定义提示词模板 / Temperature / Top P） -->
+                        <Expander Header="{i18n:Localize TrainMoreSettingsLabel}" Margin="0,8,0,0">
+                            <StackPanel Spacing="2">
+                                <!-- 附加要求规则（勾选后拼入打标提示词；对齐 PromptMaster joy_extra_options；角色名输入紧贴该选项） -->
+                                <ItemsControl ItemsSource="{Binding JoyExtraOptions}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:JoyExtraOption">
+                                            <StackPanel>
+                                                <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" Content="{Binding Label}"
+                                                          Margin="0,2,0,0"/>
+                                                <TextBox Text="{Binding #Root.DataContext.CharacterName}"
+                                                         PlaceholderText="{i18n:Localize TrainCharacterNamePlaceholder}"
+                                                         IsVisible="{Binding ShowNameInput}" Margin="20,4,0,0"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Border Height="1" Background="{DynamicResource TableGridLineBrush}" Margin="0,8,0,8"/>
+                                <!-- 自定义提示词（带模板下拉：训练人物/角色、训练风格；切换即填充） -->
+                                <TextBlock Text="{i18n:Localize TrainTemplateHint}" FontSize="12" Opacity="0.65" TextWrapping="Wrap"/>
+                                <ComboBox ItemsSource="{Binding TemplateItems}" SelectedItem="{Binding SelectedTemplate}"
+                                          DisplayMemberBinding="{Binding Label}" PlaceholderText="{i18n:Localize TrainTemplatePlaceholder}"/>
+                                <TextBox Text="{Binding ExtraPrompt}" MinLines="3" MaxLines="6"
+                                         AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
+                                         PlaceholderText="{i18n:Localize ReverseExtraPlaceholder}"/>
+                                <Border Height="1" Background="{DynamicResource TableGridLineBrush}" Margin="0,8,0,8"/>
+                                <!-- Temperature（滑条 + 数值输入联动，三位有效数字全显示） -->
+                                <TextBlock Classes="form-label" Text="{i18n:Localize TrainTemperatureLabel}"/>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <Slider Grid.Column="0" Minimum="0" Maximum="2" Value="{Binding Temperature, Mode=TwoWay}"
+                                            TickFrequency="0.05" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TemperatureText}" Width="88" Height="30"
+                                             VerticalContentAlignment="Center"/>
+                                </Grid>
+                                <!-- Top P（滑条 + 数值输入联动，三位有效数字全显示） -->
+                                <TextBlock Classes="form-label" Text="{i18n:Localize TrainTopPLabel}"/>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <Slider Grid.Column="0" Minimum="0" Maximum="1" Value="{Binding TopP, Mode=TwoWay}"
+                                            TickFrequency="0.05" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TopPText}" Width="88" Height="30"
+                                             VerticalContentAlignment="Center"/>
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </suki:GlassCard>
+
+            <!-- 右：素材 + 日志 -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,*,150" RowSpacing="8">
+
+                <!-- 素材统计/全选（对齐 PromptMaster：素材 (N) + 已选提示 + 全选/清空按钮，单行不换行） -->
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
+                    <TextBlock Text="{Binding MaterialCountText}" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding SelectionMetaText}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+                    <Button Grid.Column="3" Command="{Binding SelectAllCommand}" IsEnabled="{Binding HasItems}"
+                            Padding="8,3" VerticalAlignment="Center" IsVisible="{Binding !IsScanPath}">
+                        <TextBlock Text="{i18n:Localize TrainSelectAllLabel}" FontSize="12"/>
+                    </Button>
+                    <Button Grid.Column="4" Command="{Binding ClearSelectionCommand}" IsEnabled="{Binding HasSelection}"
+                            Padding="8,3" VerticalAlignment="Center" IsVisible="{Binding !IsScanPath}">
+                        <TextBlock Text="{i18n:Localize TrainClearSelectionLabel}" FontSize="12"/>
+                    </Button>
+                </Grid>
+
+                <!-- 素材网格（素材卡 + 末尾"添加素材"卡；扫描模式显示扫描结果） -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding VisibleMediaPlusAdd}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel ItemWidth="228"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.DataTemplates>
+                            <!-- 素材卡（外层 Border 承载选中/移入高亮；圆角与选中边框一致） -->
+                            <DataTemplate x:DataType="vm:TrainMediaItem">
+                                <Border Classes="media-card" Classes.media-selected="{Binding IsSelected}"
+                                        Margin="2,2,4,4">
+                                    <suki:GlassCard CornerRadius="8" Padding="10">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <material:MaterialIcon Kind="Image" IsVisible="{Binding IsImage}" Opacity="0.6"/>
+                                                <material:MaterialIcon Kind="Video" IsVisible="{Binding IsVideo}" Opacity="0.6"/>
+                                                <TextBlock Text="{Binding File}" FontWeight="DemiBold" TextTrimming="CharacterEllipsis" MaxWidth="70"/>
+                                            </StackPanel>
+                                            <!-- 状态标签：处理中(橙) / 已打标(蓝) / 待打标或失败(灰) -->
+                                            <Border Grid.Column="2" CornerRadius="999" Padding="6,1" VerticalAlignment="Center"
+                                                    Background="{DynamicResource WarningBrush}" IsVisible="{Binding IsRunning}">
+                                                <TextBlock Text="{Binding CaptionStateLabel}" FontSize="10" Foreground="White"/>
+                                            </Border>
+                                            <Border Grid.Column="2" CornerRadius="999" Padding="6,1" VerticalAlignment="Center"
+                                                    Background="{DynamicResource ChipBlueBrush}" IsVisible="{Binding ShowDoneTag}">
+                                                <TextBlock Text="{Binding CaptionStateLabel}" FontSize="10" Foreground="White"/>
+                                            </Border>
+                                            <Border Grid.Column="2" CornerRadius="999" Padding="6,1" VerticalAlignment="Center"
+                                                    Background="{DynamicResource ChipGreyBrush}" IsVisible="{Binding ShowTodoTag}">
+                                                <TextBlock Text="{Binding CaptionStateLabel}" FontSize="10" Opacity="0.8"/>
+                                            </Border>
+                                            <!-- 删除单卡（扫描模式隐藏） -->
+                                            <Button Grid.Column="3" Padding="2,0" VerticalAlignment="Center"
+                                                    IsVisible="{Binding #Root.DataContext.IsManagedMode}"
+                                                    Command="{Binding #Root.DataContext.DeleteOneCommand}" CommandParameter="{Binding}">
+                                                <material:MaterialIcon Kind="Close" Width="13" Height="13"/>
+                                            </Button>
+                                        </Grid>
+                                        <Border Grid.Row="1" Background="#22000000" CornerRadius="4" IsVisible="{Binding IsImage}">
+                                            <Image Source="{Binding Thumbnail}" Width="196" Height="120" Stretch="Uniform"
+                                                   HorizontalAlignment="Center"/>
+                                        </Border>
+                                        <Border Grid.Row="1" CornerRadius="4" Background="#22000000" IsVisible="{Binding IsVideo}"
+                                                Width="196" Height="120">
+                                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+                                                <material:MaterialIcon Kind="Play" Width="32" Height="32" Opacity="0.7"/>
+                                                <TextBlock Text="{i18n:Localize TrainVideoAssetLabel}" FontSize="11" Opacity="0.6"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- 素材级打标进度条（处理中显示，对齐 PromptMaster media-item-progress） -->
+                                        <ProgressBar Grid.Row="2" Minimum="0" Maximum="100" Value="{Binding CaptionProgress}"
+                                                     Height="6" IsVisible="{Binding IsRunning}"/>
+                                        <TextBox Grid.Row="3" Text="{Binding TextContent, Mode=TwoWay}" MinLines="2" MaxLines="5"
+                                                 AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="{i18n:Localize TrainCaptionWatermark}"/>
+                                        <Button Grid.Row="4" HorizontalAlignment="Right" Padding="6,2"
+                                                Command="{Binding #Root.DataContext.SaveCaptionCommand}" CommandParameter="{Binding}">
+                                            <TextBlock Text="{i18n:Localize TrainSaveCaptionLabel}" FontSize="12"/>
+                                        </Button>
+                                    </Grid>
+                                </suki:GlassCard>
+                            </Border>
+                            </DataTemplate>
+                            <!-- 添加素材卡（网格末尾；目录扫描模式不显示） -->
+                            <DataTemplate x:DataType="vm:AddMediaCard">
+                                <suki:GlassCard Margin="2,2,4,4" Padding="10" MinHeight="252">
+                                    <Button Classes="accent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                            Command="{Binding #Root.DataContext.AddImagesCommand}">
+                                        <StackPanel Orientation="Vertical" Spacing="6" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <material:MaterialIcon Kind="Plus" Width="32" Height="32"/>
+                                            <TextBlock Text="{i18n:Localize TrainAddCardLabel}" FontSize="13"/>
+                                            <TextBlock Text="{i18n:Localize TrainAddCardHint}" FontSize="11" Opacity="0.6"/>
+                                        </StackPanel>
+                                    </Button>
+                                </suki:GlassCard>
+                            </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- 运行日志（固定高度，可滚动；头部显示总进度） -->
+                <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                        <TextBlock Text="{i18n:Localize TrainRunLogLabel}" FontWeight="DemiBold"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ProgressText}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"
+                                   IsVisible="{Binding IsRunning}"/>
+                    </Grid>
+                    <Border Grid.Row="1" Background="{DynamicResource TableRowAltBrush}" CornerRadius="6" Padding="8">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding RunLogs}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ==================== 统一打标弹窗 ==================== -->
+        <Border IsVisible="{Binding IsUniformOpen}"
+                Background="#66000000" Grid.Row="0" Grid.RowSpan="3"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <suki:GlassCard Width="520" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{i18n:Localize TrainUniformTitle}" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Classes="form-label" Text="{i18n:Localize TrainUniformOpLabel}"/>
+                    <ComboBox ItemsSource="{Binding UniformOps}" DisplayMemberBinding="{Binding Value}"
+                              SelectedItem="{Binding SelectedUniformOp}" HorizontalAlignment="Stretch"/>
+                    <TextBlock Classes="form-label" Text="{i18n:Localize TrainUniformTextLabel}"/>
+                    <TextBox Text="{Binding UniformText}" MinLines="3" MaxLines="6" AcceptsReturn="True" TextWrapping="Wrap"/>
+                    <TextBlock Classes="form-label" Text="{i18n:Localize TrainUniformTargetLabel}"/>
+                    <TextBox Text="{Binding UniformTarget}" MinLines="2" MaxLines="4" AcceptsReturn="True" TextWrapping="Wrap"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
+                        <Button Grid.Column="0" Classes="primary" Command="{Binding ApplyUniformCommand}">
+                            <TextBlock Text="{i18n:Localize TrainUniformApplyLabel}"/>
+                        </Button>
+                        <Button Grid.Column="1" Command="{Binding CloseUniformCommand}">
+                            <TextBlock Text="{i18n:Localize TrainUniformCancelLabel}"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </suki:GlassCard>
+        </Border>
+    </Grid>
+</UserControl>

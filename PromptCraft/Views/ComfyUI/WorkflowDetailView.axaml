@@ -1,0 +1,214 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:PromptCraft.Controls"
+             xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="960" d:DesignHeight="760"
+             x:DataType="vm:WorkflowDetailModel"
+             x:Class="PromptCraft.Views.ComfyUI.WorkflowDetailView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="12">
+        <!-- Row 0: 标题行 -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="16"
+                           TextTrimming="CharacterEllipsis"/>
+                <Border IsVisible="{Binding IsArchived}" Background="{DynamicResource WarningTintBrush}"
+                        CornerRadius="4" Padding="6,1">
+                    <TextBlock Text="{i18n:Localize Archived}" FontSize="11" Foreground="{DynamicResource WarningBrush}"/>
+                </Border>
+            </StackPanel>
+            <!-- 标签下拉（与图库详情页一致：勾选即增删标签关联；垂直拉伸与右侧按钮等高，边框同为 SukiBorderBrush） -->
+            <controls:MultiSelectDropDown Grid.Column="1" HorizontalAlignment="Right"
+                                          VerticalAlignment="Stretch" Margin="8,0,0,0"
+                                          ItemsSource="{Binding AvailableTags}"
+                                          SelectedDisplayText="{Binding SelectedTagsSummary}" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" Margin="8,0,0,0">
+                <!-- 参数配置：用户工作流直接配置；图片/视频提取工作流先选用生成它的图片恢复真实参数（IsImageExtractedWorkflow 时切换文案） -->
+                <Button Content="{i18n:Localize ParamsConfig}" Command="{Binding OpenParamsCommand}" MinWidth="72"
+                        ToolTip.Tip="{i18n:Localize ParamsConfigTip}"
+                        IsVisible="{Binding !IsImageExtractedWorkflow}"/>
+                <Button Content="{i18n:Localize UseImageParams}" Command="{Binding OpenParamsCommand}" MinWidth="96"
+                        ToolTip.Tip="{i18n:Localize UseImageParamsTip}"
+                        IsVisible="{Binding IsImageExtractedWorkflow}"/>
+                <Button Content="{i18n:Localize Compare}" Command="{Binding CompareJobsCommand}" IsEnabled="{Binding CanCompare}" MinWidth="72"
+                        ToolTip.Tip="{i18n:Localize CompareJobsTip}"/>
+                <Button Content="{i18n:Localize ClearHistory}" Command="{Binding ClearJobsCommand}" MinWidth="72"
+                        ToolTip.Tip="{i18n:Localize ClearHistoryTip}"/>
+                <Button Command="{Binding RunCommand}" IsEnabled="{Binding CanRun}"
+                        MinWidth="90" Classes="Primary" FontWeight="DemiBold">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="▶" FontSize="13"/>
+                        <TextBlock Text="{i18n:Localize Run}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Row 1: 状态行 -->
+        <TextBlock Grid.Row="1" Text="{Binding StatusText}" FontSize="12"
+                   Foreground="Gray" Margin="0,0,0,6" TextWrapping="Wrap"/>
+
+        <!-- Row 2: 内容区（可滚动，防弹窗溢出） -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0">
+            <StackPanel Spacing="8">
+            <!-- 内容 Grid -->
+            <Grid ColumnDefinitions="340,*">
+                <!-- 左列：封面图 / 视频预览 -->
+                <StackPanel Grid.Column="0" Margin="0,0,12,0" Spacing="8">
+                    <Border CornerRadius="8" ClipToBounds="True" Height="260"
+                            Background="{DynamicResource SukiBorderBrush}">
+                        <Grid>
+                            <!-- 图片预览（非视频工作流） -->
+                            <Image Source="{Binding PreviewImage}" Stretch="Uniform"
+                                   MaxWidth="330" MaxHeight="260" IsVisible="{Binding !IsVideoWorkflow}"/>
+                            <!-- 视频预览（视频工作流）：封面+播放器（复用扩写页 MediaVideoView 范式；
+                                 CoverPath 用工作流首帧封面，避免重复抓帧） -->
+                            <controls:MediaVideoView x:Name="DetailVideoView"
+                                                     VideoPath="{Binding VideoPath}"
+                                                     CoverPath="{Binding CoverImagePath}"
+                                                     IsPlaying="{Binding IsPlaying, Mode=TwoWay}"
+                                                     IsVisible="{Binding IsVideoWorkflow}"/>
+                            <!-- 中央播放按钮：视频且未播放（含暂停） -->
+                            <Button x:Name="CenterPlayButton" Click="OnDetailVideoPlay"
+                                    IsVisible="{Binding ShowCenterPlay}"
+                                    Width="52" Height="52" CornerRadius="26" Padding="0"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Background="#CC000000" Foreground="White"
+                                    BorderThickness="0" Classes="NoPressedAnimation"
+                                    ToolTip.Tip="{i18n:Localize Play}">
+                                <avalonia:MaterialIcon Kind="PlayArrow" Width="24" Height="24"/>
+                            </Button>
+                            <!-- 左下角控制条：播放中显示 暂停 + 停止
+                                 （注意：不能放在 Border 内媒体区——MediaVideoView 的 VideoView 是原生空域窗口，
+                                   播放时盖住同区所有 Avalonia 元素，扩写页同因把播放按钮移出媒体区） -->
+                            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsPreviewLoading}"
+                                         VerticalAlignment="Center" HorizontalAlignment="Center" Width="160"/>
+                        </Grid>
+                    </Border>
+                    <!-- 播放控制条（Border 外，播放时显示：暂停 + 停止；与扩写页卡片按钮同范式） -->
+                    <StackPanel Orientation="Horizontal" Spacing="8"
+                                IsVisible="{Binding IsPlaying}"
+                                HorizontalAlignment="Left">
+                        <Button Click="OnDetailVideoPause" Height="32" Padding="10,0"
+                                Background="#CC000000" Foreground="White" BorderThickness="0"
+                                Classes="NoPressedAnimation" ToolTip.Tip="{i18n:Localize Pause}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <avalonia:MaterialIcon Kind="Pause" Width="16" Height="16" VerticalAlignment="Center"/>
+                                <TextBlock Text="{i18n:Localize Pause}" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Click="OnDetailVideoStop" Height="32" Padding="10,0"
+                                Background="#CC000000" Foreground="White" BorderThickness="0"
+                                Classes="NoPressedAnimation" ToolTip.Tip="{i18n:Localize Stop}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <avalonia:MaterialIcon Kind="Stop" Width="16" Height="16" VerticalAlignment="Center"/>
+                                <TextBlock Text="{i18n:Localize Stop}" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                    <Button Command="{Binding ChooseImageCommand}" Content="{i18n:Localize ChooseCoverImage}"
+                            HorizontalAlignment="Stretch" IsVisible="{Binding !IsVideoWorkflow}"/>
+                </StackPanel>
+
+                <!-- 右列：执行历史（最高与左列封面+选择按钮保持一致高度，超出滚动） -->
+                <StackPanel Grid.Column="1" Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="{i18n:Localize RunHistory}" FontWeight="SemiBold" FontSize="13"/>
+                        <Button Grid.Column="1" Classes="Borderless" Command="{Binding RefreshHistoryCommand}"
+                                ToolTip.Tip="{i18n:Localize RefreshHistoryTip}" Padding="4"
+                                BorderThickness="0" Background="Transparent">
+                            <avalonia:MaterialIcon Kind="Refresh" Width="14" Height="14"/>
+                        </Button>
+                    </Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                    <StackPanel Spacing="2">
+                    <ItemsControl ItemsSource="{Binding Jobs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WorkflowJobItem">
+                                <Border CornerRadius="6" BorderThickness="1" Margin="0,2"
+                                        BorderBrush="{DynamicResource SukiBorderBrush}" Padding="8"
+                                        DoubleTapped="OnJobDoubleTapped"
+                                        ToolTip.Tip="{i18n:Localize DoubleClickViewOutputTip}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <!-- 对比多选 -->
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  VerticalAlignment="Center" Margin="0,0,8,0"
+                                                  ToolTip.Tip="{i18n:Localize SelectTwoCompareTip}"/>
+                                        <!-- 条目主体 -->
+                                        <StackPanel Grid.Column="1" Spacing="4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <Border Grid.Column="0" Background="{DynamicResource ChipWhiteBrush}" CornerRadius="4" Padding="6,1">
+                                                    <TextBlock Text="{Binding StatusText}" FontSize="11"
+                                                               Foreground="{Binding StatusBrush}" FontWeight="SemiBold"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                                                            Margin="10,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TimeText}" FontSize="11" Foreground="Gray"/>
+                                                    <TextBlock Text="{Binding DurationText}" FontSize="11" Foreground="Gray"
+                                                               ToolTip.Tip="{i18n:Localize Duration}"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding PromptId}" FontSize="10"
+                                                           Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" MaxWidth="140"
+                                                           ToolTip.Tip="{Binding PromptId}"/>
+                                            </Grid>
+                                            <!-- 运行中进度条：仅执行中显示，完成/失败自动隐藏 -->
+                                            <ProgressBar Minimum="0" Maximum="{Binding ProgressMax}"
+                                                         Value="{Binding ProgressValue}" Height="4"
+                                                         IsVisible="{Binding IsRunning}" Margin="0,4,0,0"/>
+                                            <TextBlock IsVisible="{Binding HasError}"
+                                                       Text="{Binding ErrorMessage}" FontSize="11"
+                                                       Foreground="{DynamicResource DangerSoftBrush}" TextWrapping="Wrap"/>
+                                            <ItemsControl ItemsSource="{Binding OutputThumbs}" IsVisible="{Binding HasOutputs}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Margin="0,0,6,0" CornerRadius="4" ClipToBounds="True" Width="56" Height="56">
+                                                            <Image Source="{Binding}" Stretch="UniformToFill"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <!-- 单条删除 -->
+                                        <Button Grid.Column="2" Content="{i18n:Localize Delete}" Classes="Borderless" FontSize="11"
+                                                Command="{Binding $parent[ItemsControl].DataContext.DeleteJobCommand}"
+                                                CommandParameter="{Binding}" VerticalAlignment="Top"
+                                                Margin="8,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{i18n:Localize NoRunHistory}" FontSize="12" Foreground="Gray"
+                               IsVisible="{Binding !HasJobs}"/>
+                    </StackPanel>
+                    </ScrollViewer>
+                </StackPanel>
+            </Grid>
+
+            <!-- JSON 编辑区（保存按钮在弹窗底部"保存"） -->
+            <Border CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" Padding="8">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{i18n:Localize WorkflowJsonLabel}" FontWeight="SemiBold" FontSize="13"
+                               Margin="0,0,0,4"/>
+                    <controls:CodeEditor Grid.Row="1" Grid.ColumnSpan="2" Height="180"
+                                         Language="json"
+                                         Text="{Binding WorkflowJson, Mode=TwoWay}"/>
+                </Grid>
+            </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="760" d:DesignHeight="520"
+             x:DataType="vm:ThumbnailPickerModel"
+             x:Class="PromptCraft.Views.ComfyUI.ThumbnailPickerView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,*" Margin="8">
+        <!-- Row 0: 搜索 + 标签筛选 -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+            <TextBox Grid.Column="0" Text="{Binding SearchText}" PlaceholderText="{i18n:Localize SearchFileNamePlaceholder}" MinHeight="30"/>
+            <ComboBox Grid.Column="1" Margin="8,0,0,0" MinWidth="150"
+                      ItemsSource="{Binding TagOptions}"
+                      SelectedItem="{Binding SelectedTagOption}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:TagOption">
+                        <TextBlock Text="{Binding Text}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Grid.Column="2" Text="{Binding StatusText}" FontSize="11" Foreground="Gray"
+                       VerticalAlignment="Center" Margin="10,0,0,0"/>
+        </Grid>
+
+        <!-- Row 1: 瀑布流（4 列，按图片比例高度错落） -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ScrollChanged="OnScrollChanged">
+            <ItemsControl ItemsSource="{Binding Columns}" HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ItemsControl ItemsSource="{Binding}" Margin="0,0,8,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ThumbnailPickerItem">
+                                    <Border Width="112" Margin="0,0,0,8" CornerRadius="6" ClipToBounds="True"
+                                            BorderThickness="0"
+                                            BorderBrush="{DynamicResource SukiBorderBrush}"
+                                            Background="{DynamicResource SukiCardBrush}"
+                                            PointerPressed="OnItemPointerPressed"
+                                            Classes.sel="{Binding IsSelected}">
+                                        <Border.Styles>
+                                            <Style Selector="Border.sel">
+                                                <Setter Property="BorderThickness" Value="2"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/>
+                                            </Style>
+                                        </Border.Styles>
+                                        <StackPanel Spacing="2">
+                                            <Grid>
+                                                <Border Width="112" Height="{Binding ThumbHeight}">
+                                                    <Image Source="{Binding Thumbnail}" Stretch="Uniform"/>
+                                                </Border>
+                                                <!-- 选中遮罩 + 对勾 -->
+                                                <Border IsVisible="{Binding IsSelected}" Background="{DynamicResource OverlayLightBrush}"/>
+                                                <Border IsVisible="{Binding IsSelected}" Width="18" Height="18"
+                                                        CornerRadius="9" Background="{DynamicResource SuccessBrush}"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                        Margin="0,4,4,0">
+                                                    <TextBlock Text="✓" FontSize="11" Foreground="White"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                            <TextBlock Text="{Binding FileName}" FontSize="10" Foreground="Gray"
+                                                       TextTrimming="CharacterEllipsis" Margin="4,0" MaxWidth="104"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

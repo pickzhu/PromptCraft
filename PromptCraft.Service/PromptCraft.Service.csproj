@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PromptCraft.Test" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BaseClassLib\BaseClassLib.csproj" />
+    <ProjectReference Include="..\PromptCraft.Consts\PromptCraft.Consts.csproj" />
+    <ProjectReference Include="..\PromptCraft.Data\PromptCraft.Data.csproj" />
+    <ProjectReference Include="..\PromptCraft.Interfaces\PromptCraft.Interfaces.csproj" />
+    <ProjectReference Include="..\PromptCraft.Models\PromptCraft.Models.csproj" />
+    <ProjectReference Include="..\Ke.Bee.Localization\Ke.Bee.Localization.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="SkiaSharp" />
+    <!-- 离线 OCR + PDF 渲染（知识库深度解析：扫描件 PDF / docx / 图片） -->
+    <PackageReference Include="Sdcb.SimdPaddleOCR" />
+    <PackageReference Include="Sdcb.SimdPaddleOCR.Models.ChineseV6Tiny" />
+    <PackageReference Include="Docnet.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MiniMax Full-Reference 指南模板：随服务层打包为嵌入资源（逻辑名 PromptCraft.Service.prompts.*）
+         注意：SDK 10 的 _GenerateCompileInputs 要求 EmbeddedResource 显式带 Type=Non-Resx + WithCulture=false，否则不进入 CoreCompile 资源列表。 -->
+    <EmbeddedResource Include="Assets\prompts\h3-full-reference-rewrite.zh.md">
+      <LogicalName>PromptCraft.Service.prompts.h3-full-reference-rewrite.zh.md</LogicalName>
+      <Type>Non-Resx</Type>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\prompts\h3-full-reference-rewrite.en.md">
+      <LogicalName>PromptCraft.Service.prompts.h3-full-reference-rewrite.en.md</LogicalName>
+      <Type>Non-Resx</Type>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\prompts\h3-base-video-prompt.zh.md">
+      <LogicalName>PromptCraft.Service.prompts.h3-base-video-prompt.zh.md</LogicalName>
+      <Type>Non-Resx</Type>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Assets\prompts\h3-base-video-prompt.en.md">
+      <LogicalName>PromptCraft.Service.prompts.h3-base-video-prompt.en.md</LogicalName>
+      <Type>Non-Resx</Type>
+      <WithCulture>false</WithCulture>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

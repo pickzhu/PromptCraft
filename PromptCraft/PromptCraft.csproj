@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="PromptCraft.Test" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
+		<PackageReference Include="Avalonia.Controls.WebView" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\PromptCraft.Consts\PromptCraft.Consts.csproj" />
+	  <ProjectReference Include="..\PromptCraft.Data\PromptCraft.Data.csproj" />
+	  <ProjectReference Include="..\PromptCraft.Dock\PromptCraft.Dock.csproj" />
+	  <ProjectReference Include="..\PromptCraft.Models\PromptCraft.Models.csproj" />
+	  <ProjectReference Include="..\PromptCraft.Service\PromptCraft.Service.csproj" />
+	  <ProjectReference Include="..\PromptCraft.UILib\PromptCraft.UILib.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Styles\CompletionWindowStyles.axaml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <AvaloniaResource Update="Assets\i18n\en-US.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </AvaloniaResource>
+	  <AvaloniaResource Update="Assets\i18n\zh-CN.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </AvaloniaResource>
+	</ItemGroup>
+
+</Project>

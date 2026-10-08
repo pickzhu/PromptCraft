@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.PromptLibrary"
+             xmlns:cu="using:PromptCraft.ViewModels.ComfyUI"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="400" d:DesignHeight="400"
+             x:DataType="vm:PromptBatchTagModel"
+             x:Class="PromptCraft.Views.PromptLibrary.PromptBatchTagView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="12" RowSpacing="8">
+        <!-- 标题：目标提示词数量 -->
+        <TextBlock FontWeight="DemiBold" FontSize="14"
+                   Text="{Binding TargetCountText}" />
+
+        <!-- 标签复选框列表 -->
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Tags}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="cu:TagItem">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <!-- 标签颜色色块（保存的 Tags.Color） -->
+                            <Border Width="10" Height="10" CornerRadius="2"
+                                    Background="{Binding Color}"
+                                    VerticalAlignment="Center" />
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}"
+                                      FontSize="13" Padding="6,3" Margin="0,1" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- 状态（"保存"已并入宿主 foot 关闭按钮左侧） -->
+        <StackPanel Grid.Row="2" Spacing="6">
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12"
+                       Foreground="{DynamicResource SukiLowText}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

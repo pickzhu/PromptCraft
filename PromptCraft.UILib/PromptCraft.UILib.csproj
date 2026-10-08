@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BaseClassLib\BaseClassLib.csproj" />
+    <!-- 供 Markdown 渲染失败时输出日志（静态 LogService.Instance，不引入 DI 依赖） -->
+    <ProjectReference Include="..\PromptCraft.Service\PromptCraft.Service.csproj" />
+    <ProjectReference Include="..\Ke.Bee.Localization\Ke.Bee.Localization.csproj" />
+  </ItemGroup>
+
+</Project>

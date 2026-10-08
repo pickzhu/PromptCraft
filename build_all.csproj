@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- 本工程仅作为 ProjectReference 聚合入口，自身不编译代码。
+         若不关闭默认编译项，SDK 的 **/*.cs 通配会把子项目源码及子项目 obj/bin 下
+         自动生成的 AssemblyInfo 全部纳入本工程编译，导致 BCL 类型缺失(CS0246)、
+         特性重复(CS0579) 等错误。 -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <!-- 聚合入口不处理 XAML：子项目的 axaml 会经 ProjectReference 传递进 AdditionalFiles，
+         若不禁用，Avalonia 生成器会在本工程生成 .g.cs 并编译，引发 CS1929 等错误。 -->
+    <AvaloniaNameGeneratorIsEnabled>false</AvaloniaNameGeneratorIsEnabled>
+    <EnableAvaloniaXamlCompilation>false</EnableAvaloniaXamlCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Remove="**/*.axaml" />
+    <AdditionalFiles Remove="**/*.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="PromptCraft.Consts\PromptCraft.Consts.csproj" />
+    <ProjectReference Include="PromptCraft.Data\PromptCraft.Data.csproj" />
+    <ProjectReference Include="PromptCraft.Dock\PromptCraft.Dock.csproj" />
+    <ProjectReference Include="PromptCraft.Interfaces\PromptCraft.Interfaces.csproj" />
+    <ProjectReference Include="PromptCraft.Models\PromptCraft.Models.csproj" />
+    <ProjectReference Include="PromptCraft.Service\PromptCraft.Service.csproj" />
+    <ProjectReference Include="PromptCraft.UILib\PromptCraft.UILib.csproj" />
+    <ProjectReference Include="BaseClassLib\BaseClassLib.csproj" />
+    <ProjectReference Include="PromptCraft\PromptCraft.csproj" />
+    <ProjectReference Include="PromptCraft.Desktop\PromptCraft.Desktop.csproj" />
+  </ItemGroup>
+</Project>

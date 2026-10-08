@@ -1,0 +1,27 @@
+﻿<UserControl x:Class="PromptCraft.CustomThemColor"
+			 xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+			 xmlns:local="clr-namespace:PromptCraft.ViewModels"
+			 x:DataType="local:CustomThemColorModel">
+	<StackPanel Spacing="20">
+		<Grid ColumnDefinitions="Auto,100,*" RowDefinitions="Auto,20,Auto,20,Auto,20,Auto" Margin="50" HorizontalAlignment="Stretch">
+			<TextBlock Grid.Row="0" Text="{i18n:Localize Name_:}" Margin="8" Grid.Column="0" Width="100"></TextBlock>
+			<TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding ColorName}"></TextBox>
+
+
+			<TextBlock  Grid.Row="2" Margin="8" Grid.Column="0" Text="{i18n:Localize PrimaryColor}"></TextBlock>
+			<ColorPicker  Grid.Row="2" Grid.Column="2" Color="{Binding PrimaryColor}"></ColorPicker>
+			<Rectangle Grid.Row="2" Grid.Column="1" Fill="{Binding PrimaryColorStr}" />
+
+
+			<TextBlock Grid.Row="4" Margin="8" Grid.Column="0" Text="{i18n:Localize AccentColor}"></TextBlock>
+			<ColorPicker Grid.Row="4" Grid.Column="2" Color="{Binding AccentColor}" Background="{Binding AccentColor}"></ColorPicker>
+			<Rectangle Grid.Row="4" Grid.Column="1" Fill="{Binding AccentColorStr}" />
+		</Grid>
+	</StackPanel>
+</UserControl>

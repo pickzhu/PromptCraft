@@ -1,0 +1,11 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dockThemes="clr-namespace:Dock.Avalonia.Themes.Fluent;assembly=Dock.Avalonia.Themes.Fluent">
+
+    <Design.PreviewWith>
+        <Border Padding="20">
+        </Border>
+    </Design.PreviewWith>
+
+	<dockThemes:DockFluentTheme />
+</Styles>

@@ -1,0 +1,77 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="720" d:DesignHeight="560"
+             x:DataType="vm:WorkflowParamsModel"
+             x:Class="PromptCraft.Views.ComfyUI.WorkflowParamsView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="*,Auto" Margin="12">
+        <!-- 参数列表 -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="6">
+                <TextBlock Text="{i18n:Localize ParamsTip}"
+                           FontSize="11" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WorkflowParamItem">
+                            <Border CornerRadius="6" BorderThickness="1" Margin="0,2"
+                                    BorderBrush="{DynamicResource SukiBorderBrush}" Padding="10">
+                                <StackPanel Spacing="6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="12"/>
+                                            <TextBlock Text="{Binding NodeId}" FontSize="10" Foreground="{DynamicResource MutedTextBrush}"/>
+                                        </StackPanel>
+                                        <Border Grid.Column="1" Background="{DynamicResource ChipWhiteBrush}" CornerRadius="4" Padding="6,1"
+                                                VerticalAlignment="Center" Margin="8,0,0,0">
+                                            <TextBlock Text="{Binding TypeTag}" FontSize="10" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="{i18n:Localize CurrentValue}" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+                                        <Border Background="{DynamicResource SukiControlBackgroundBrush}" CornerRadius="4"
+                                                Padding="8,2">
+                                            <TextBlock Text="{Binding CurrentValue}" FontSize="11" FontFamily="Consolas"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="300"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <!-- 固定值编辑（未勾选随机时显示） -->
+                                    <Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding !UseRandom}">
+                                        <TextBlock Grid.Column="0" Text="{i18n:Localize NewValue}" FontSize="11" Foreground="Gray"
+                                                   VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBox Grid.Column="1" Text="{Binding NewValue, Mode=TwoWay}" FontSize="12"
+                                                 FontFamily="Consolas"/>
+                                    </Grid>
+                                    <!-- 随机范围（勾选随机时显示） -->
+                                    <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowRandomRange}">
+                                        <TextBlock Text="{i18n:Localize RandomRange}" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+                                        <NumericUpDown Value="{Binding RandomMin}" Minimum="0" Maximum="18446744073709551615"
+                                                       FormatString="0" Width="160"/>
+                                        <TextBlock Text="~" VerticalAlignment="Center"/>
+                                        <NumericUpDown Value="{Binding RandomMax}" Minimum="0" Maximum="18446744073709551615"
+                                                       FormatString="0" Width="160"/>
+                                    </StackPanel>
+                                    <!-- 种子：随机开关 -->
+                                    <CheckBox Content="{i18n:Localize UseRandomSeed}" IsChecked="{Binding UseRandom, Mode=TwoWay}"
+                                              IsVisible="{Binding IsSeed}" FontSize="12"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{i18n:Localize NoConfigParams}" FontSize="12" Foreground="Gray"
+                           IsVisible="{Binding HasNoParams}" HorizontalAlignment="Center" Margin="0,20"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 底部：仅保存中状态（body 保存/关闭按钮已移除 → 宿主 foot 已有 [保存][关闭]，避免重复） -->
+        <Grid Grid.Row="1" Margin="0,10,0,0">
+            <TextBlock Text="{i18n:Localize Saving}" FontSize="11" Foreground="Gray"
+                       VerticalAlignment="Center" IsVisible="{Binding IsSaving}"/>
+        </Grid>
+    </Grid>
+</UserControl>

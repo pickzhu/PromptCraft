@@ -1,0 +1,74 @@
+﻿<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+			 xmlns:avaloniaEdit="https://github.com/avaloniaui/avaloniaedit"
+			 xmlns:local="using:PromptCraft"
+		     xmlns:data="clr-namespace:PromptCraft.ViewModels"
+             x:Class="PromptCraft.App"
+			 x:DataType="viewmodels:AppViewModel"
+			 xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:viewmodels="using:PromptCraft.ViewModels"
+			 xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+			 xmlns:conv="using:PromptCraft.Converters"
+             RequestedThemeVariant="Light">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+	<!--托盘图标和菜单设置-->
+	<TrayIcon.Icons>
+		<TrayIcons>
+			<TrayIcon Icon="/Assets/node.png" ToolTipText="PromptCraft">
+				<TrayIcon.Menu>
+					<NativeMenu>
+						<NativeMenuItem Header="{Binding MenuExit}">
+						</NativeMenuItem>
+					</NativeMenu>
+				</TrayIcon.Menu>
+			</TrayIcon>
+		</TrayIcons>
+	</TrayIcon.Icons>
+
+	<!--
+        Refer to the link below to customize your font.
+        https://kikipoulet.github.io/SukiUI/documentation/faq/custom-font.html#how-to-use-custom-font
+    -->
+
+	<Application.Resources>
+		<ResourceDictionary>
+			<conv:BoolToPasswordCharConverter x:Key="BoolToPasswordChar"/>
+			<conv:BoolToEyeIconConverter x:Key="BoolToEyeIcon"/>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="Styles/CompletionWindowStyles.axaml"></ResourceInclude>
+				<ResourceInclude Source="Styles/AppColors.axaml"></ResourceInclude>
+			</ResourceDictionary.MergedDictionaries>
+			<ResourceDictionary.ThemeDictionaries>
+				<ResourceDictionary x:Key="Dark">
+					<Color x:Key="BorderColor">#3DFFFFFF</Color>
+					<Color x:Key="ForegroundColor">#FFFFFF</Color>
+					<Color x:Key="CardBackgroundColor">#15000000</Color>
+					<Color x:Key="SecondaryCardBackgroundColor">#99000000</Color>
+				</ResourceDictionary>
+				<ResourceDictionary x:Key="Light">
+					<Color x:Key="BorderColor">#cccccc</Color>
+					<Color x:Key="ForegroundColor">#cccccc</Color>
+					<Color x:Key="CardBackgroundColor">#cccccc</Color>
+					<Color x:Key="SecondaryCardBackgroundColor">#cccccc</Color>
+				</ResourceDictionary>
+			</ResourceDictionary.ThemeDictionaries>
+		</ResourceDictionary>
+	</Application.Resources>
+	<Application.Styles>
+		<FluentTheme />
+		<StyleInclude Source="avares://PromptCraft.Dock/Index.axaml" />
+		<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"/>
+		<StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"/>
+		<suki:SukiTheme Locale="en-US" ThemeColor="Green" />
+		<StyleInclude Source="avares://PromptCraft/Styles/WrapPanelStyles.axaml"/>
+		<StyleInclude Source="avares://PromptCraft/Styles/TextStyles.axaml"/>
+		<StyleInclude Source="avares://PromptCraft/Styles/GlassCardStyles.axaml"/>
+		<StyleInclude Source="avares://PromptCraft/Styles/MaterialIconStyles.axaml"/>
+		<StyleInclude Source="avares://PromptCraft/Styles/ProviderButtonStyles.axaml"/>
+		<StyleInclude Source="avares://PromptCraft/Styles/CommonStyles.axaml"/>
+		<StyleInclude Source="avares://PromptCraft.UILib/Markdown/Styles.axaml"/>
+		<!--<StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml"/>-->
+		<avalonia:MaterialIconStyles />
+	</Application.Styles>
+</Application>

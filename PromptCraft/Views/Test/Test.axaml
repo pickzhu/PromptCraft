@@ -1,0 +1,73 @@
+﻿<!--这里使用的是渐入渐出的形式，尝试解决闪烁问题-->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:test="using:PromptCraft.ViewModels.Test"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DesignWidth="800"
+             d:DesignHeight="450"
+             xmlns:generic="clr-namespace:System.Collections.Generic;assembly=System.Collections"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:local="using:PromptCraft.ViewModels.System"
+             xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:controls="using:PromptCraft.Controls"
+             xmlns:models="using:PromptCraft.Models"
+             xmlns:promptcraft="clr-namespace:PromptCraft;assembly=PromptCraft"
+             xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+             x:DataType="test:TestViewModel"
+             x:Class="PromptCraft.Test"
+             mc:Ignorable="d">
+    <ScrollViewer Padding="15">
+        
+        <!-- 使用 ItemsControl 展示列表 -->
+        <ItemsControl ItemsSource="{Binding Items}">
+            
+            <!-- 核心：改变列表的布局面板为自定义的瀑布流面板 -->
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <!-- ColumnWidth: 每列固定宽度为 220 像素；Spacing: 卡片上下左右间距 12 像素 -->
+                    <controls:WaterfallPanel ColumnWidth="220" Spacing="12" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+
+            <!-- 卡片的内容模板 -->
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <!-- 这里的卡片高度千万不能写死，必须由内部的控件自适应撑开 -->
+                    <Border Background="#1E1E1E" 
+                            BorderBrush="#333333" 
+                            BorderThickness="1" 
+                            CornerRadius="8" 
+                            Padding="12">
+                        <StackPanel Spacing="8">
+                            <!-- 标题 -->
+                            <TextBlock Text="{Binding Title}" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#FFFFFF"/>
+                            
+                            <!-- 模拟不规则高度的彩色区域（实际项目中这里通常是 Image 控件） -->
+                            <Border Height="{Binding RandomHeight}" 
+                                    Background="#2C3E50" 
+                                    CornerRadius="4"
+                                    HorizontalAlignment="Stretch">
+                                <TextBlock Text="图片/内容区域" 
+                                           Foreground="#7F8C8D" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <!-- 文本描述 -->
+                            <TextBlock Text="{Binding Description}" 
+                                       FontSize="13" 
+                                       Foreground="#B3B3B3" 
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        
+    </ScrollViewer>
+</UserControl>

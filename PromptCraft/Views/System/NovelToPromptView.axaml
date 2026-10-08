@@ -1,0 +1,322 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:local="using:PromptCraft"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:NovelToPromptViewModel"
+             x:Class="PromptCraft.NovelToPromptView"
+             d:DesignWidth="1600" d:DesignHeight="900"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <local:IntEqualsConverter x:Key="IntEq"/>
+    </UserControl.Resources>
+
+    <Grid ColumnDefinitions="460,*" Margin="16" ColumnSpacing="16">
+
+        <!-- 左：小说原文 + 选项 -->
+        <suki:GlassCard Padding="16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="{i18n:Localize NovelSourceLabel}" FontWeight="DemiBold"/>
+                    <TextBox Text="{Binding NovelText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                             Height="240" VerticalContentAlignment="Top"
+                             PlaceholderText="{i18n:Localize NovelSourcePlaceholder}"
+                             IsEnabled="{Binding !IsRunning}"/>
+
+                    <TextBlock Text="{i18n:Localize AiProviderLabel}" FontWeight="DemiBold"/>
+                    <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}"
+                              DisplayMemberBinding="{Binding Name}" IsEnabled="{Binding !IsRunning}"/>
+                    <TextBlock Text="{i18n:Localize ModelLabel}" FontWeight="DemiBold"/>
+                    <ComboBox ItemsSource="{Binding FilteredModels}" SelectedItem="{Binding SelectedModel}"
+                              DisplayMemberBinding="{Binding ModelName}" IsEnabled="{Binding !IsRunning}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding !HasExpandModels}">
+                        <TextBlock Grid.Column="0" Text="{Binding NoModelsText}" FontSize="12" Opacity="0.8"
+                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Classes="accent" Command="{Binding GoSettingsCommand}"
+                                Padding="8,2" VerticalAlignment="Center">
+                            <TextBlock Text="{i18n:Localize GoConfigureLabel}" FontSize="12"/>
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="{i18n:Localize NovelStageEnableLabel}" FontWeight="DemiBold"/>
+                    <UniformGrid Columns="2" IsEnabled="{Binding !IsRunning}">
+                        <CheckBox Content="{i18n:Localize NovelStage_Concept}" IsChecked="{Binding EnableConcept}"/>
+                        <CheckBox Content="{i18n:Localize NovelStage_Characters}" IsChecked="{Binding EnableCharacters}"/>
+                        <CheckBox Content="{i18n:Localize NovelStage_Worldbuilding}" IsChecked="{Binding EnableWorldbuilding}"/>
+                        <CheckBox Content="{i18n:Localize NovelStage_Treatment}" IsChecked="{Binding EnableTreatment}"/>
+                        <CheckBox Content="{i18n:Localize NovelStage_AssetScan}" IsChecked="{Binding EnableAssetScan}"/>
+                        <CheckBox Content="{i18n:Localize NovelStage_ShotPlanning}" IsChecked="{Binding EnableShotPlanning}"/>
+                        <CheckBox Content="{i18n:Localize NovelStage_Prompts}" IsChecked="{Binding EnablePrompts}"/>
+                    </UniformGrid>
+
+                    <TextBlock Text="{i18n:Localize NovelOutputFormatLabel}" FontWeight="DemiBold"/>
+                    <ComboBox ItemsSource="{Binding OutputFormatItems}" SelectedIndex="{Binding OutputFormatIndex}"
+                              IsEnabled="{Binding !IsRunning}"/>
+                    <CheckBox IsChecked="{Binding EnableNoRefT2VA}" IsEnabled="{Binding !IsRunning}">
+                        <TextBlock Text="{i18n:Localize NovelNoRefT2VA}" TextWrapping="Wrap"/>
+                    </CheckBox>
+
+                    <TextBlock Text="{i18n:Localize NovelOutputLanguageLabel}" FontWeight="DemiBold"/>
+                    <ComboBox ItemsSource="{Binding OutputLanguageItems}" SelectedIndex="{Binding OutputLanguageIndex}"
+                              IsEnabled="{Binding !IsRunning}"/>
+
+                    <TextBlock Text="{i18n:Localize NovelGranularityLabel}" FontWeight="DemiBold"/>
+                    <StackPanel Orientation="Horizontal" Spacing="12" IsEnabled="{Binding !IsRunning}">
+                        <RadioButton GroupName="NovelGranularity" Content="{Binding GranularityItems[0]}"
+                                     IsChecked="{Binding GranularityIndex, Converter={StaticResource IntEq}, ConverterParameter=0, Mode=TwoWay}"/>
+                        <RadioButton GroupName="NovelGranularity" Content="{Binding GranularityItems[1]}"
+                                     IsChecked="{Binding GranularityIndex, Converter={StaticResource IntEq}, ConverterParameter=1, Mode=TwoWay}"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{i18n:Localize NovelReviewModeLabel}" FontWeight="DemiBold"/>
+                    <StackPanel Orientation="Horizontal" Spacing="12" IsEnabled="{Binding !IsRunning}">
+                        <RadioButton GroupName="NovelReview" Content="{Binding ReviewModeItems[0]}"
+                                     IsChecked="{Binding ReviewModeIndex, Converter={StaticResource IntEq}, ConverterParameter=0, Mode=TwoWay}"/>
+                        <RadioButton GroupName="NovelReview" Content="{Binding ReviewModeItems[1]}"
+                                     IsChecked="{Binding ReviewModeIndex, Converter={StaticResource IntEq}, ConverterParameter=1, Mode=TwoWay}"/>
+                    </StackPanel>
+
+                    <CheckBox Content="{i18n:Localize NovelAssetLlmClassify}" IsChecked="{Binding AssetLlmClassify}"
+                              IsEnabled="{Binding !IsRunning}"/>
+                    <CheckBox Content="{i18n:Localize NovelKbEnabled}" IsChecked="{Binding KnowledgeBaseEnabled}"
+                              IsEnabled="{Binding !IsRunning}"/>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                        <TextBox Grid.Column="0" Text="{Binding KnowledgeBasePath, Mode=TwoWay}"
+                                 PlaceholderText="{i18n:Localize NovelKbPathPlaceholder}"
+                                 IsEnabled="{Binding !IsExecuting}"/>
+                        <Button Grid.Column="1" Command="{Binding PickKnowledgeBasePathCommand}"
+                                Padding="10,4" IsEnabled="{Binding !IsExecuting}"
+                                VerticalContentAlignment="Center">
+                            <TextBlock Text="{i18n:Localize NovelBrowse}" FontSize="12"/>
+                        </Button>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                        <TextBox Grid.Column="0" Text="{Binding AssetDirectory, Mode=TwoWay}"
+                                 PlaceholderText="{i18n:Localize NovelAssetDirPlaceholder}"
+                                 IsEnabled="{Binding !IsExecuting}"/>
+                        <Button Grid.Column="1" Command="{Binding PickAssetDirectoryCommand}"
+                                Padding="10,4" IsEnabled="{Binding !IsExecuting}"
+                                VerticalContentAlignment="Center">
+                            <TextBlock Text="{i18n:Localize NovelBrowse}" FontSize="12"/>
+                        </Button>
+                    </Grid>
+
+                    <CheckBox IsChecked="{Binding EnableGapPrompt}"
+                              IsEnabled="{Binding !IsRunning}">
+                        <TextBlock Text="{i18n:Localize NovelGapPromptEnabled}" TextWrapping="Wrap"/>
+                    </CheckBox>
+                    <Grid ColumnDefinitions="Auto,64,Auto,64" ColumnSpacing="6">
+                        <TextBlock Grid.Column="0" Text="{i18n:Localize NovelImageBatchSizeLabel}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding ImageBatchSize, Mode=TwoWay}" Width="64"
+                                 VerticalContentAlignment="Center" IsEnabled="{Binding !IsRunning}"/>
+                        <TextBlock Grid.Column="2" Text="{i18n:Localize NovelVoiceBatchSizeLabel}" FontSize="12"
+                                   VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="3" Text="{Binding VoiceBatchSize, Mode=TwoWay}" Width="64"
+                                 VerticalContentAlignment="Center" IsEnabled="{Binding !IsRunning}"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBox Grid.Column="0" Text="{Binding AspectRatio, Mode=TwoWay}"
+                                 PlaceholderText="{i18n:Localize NovelAspectRatio}"
+                                 IsEnabled="{Binding !IsRunning}"/>
+                        <TextBox Grid.Column="1" Text="{Binding DefaultShotSeconds, Mode=TwoWay}" Width="70"
+                                 PlaceholderText="s" IsEnabled="{Binding !IsRunning}"/>
+                    </Grid>
+                    <TextBlock Text="{i18n:Localize NovelVideoParamsTip}" Classes="hint" TextWrapping="Wrap"/>
+                </StackPanel>
+            </ScrollViewer>
+        </suki:GlassCard>
+
+        <!-- 右：阶段进度 + 输出 -->
+        <Grid Grid.Column="1" RowDefinitions="*,*" RowSpacing="12">
+
+            <suki:GlassCard Padding="14" Grid.Row="0">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <TextBlock Text="{i18n:Localize NovelPipelineTitle}" FontWeight="DemiBold"/>
+                        <Button Grid.Column="1" Command="{Binding StartPipelineCommand}"
+                                IsVisible="{Binding !IsRunning}"
+                                Background="{DynamicResource PrimaryBrush}" Foreground="White" Content="{i18n:Localize NovelStart}"/>
+                        <Button Grid.Column="2" Margin="8,0,0,0" Foreground="White" Background="{DynamicResource DangerDeepBrush}"
+                                IsVisible="{Binding IsRunning}" Command="{Binding StopCommand}" Content="{i18n:Localize ExpandStop}"/>
+                        <Button Grid.Column="3" Margin="8,0,0,0" Foreground="White" Background="{DynamicResource WarningBrush}"
+                                IsVisible="{Binding CanRestartPipeline}" Command="{Binding RestartPipelineCommand}"
+                                Content="{i18n:Localize NovelRestart}"/>
+                    </Grid>
+
+                    <ListBox Grid.Row="1" ItemsSource="{Binding StageItems}" BorderThickness="0"
+                             Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid RowDefinitions="Auto,Auto" Margin="0,3"
+                                      DoubleTapped="OnStageDoubleTapped"
+                                      Cursor="Hand" ToolTip.Tip="{i18n:Localize NovelStageDoubleTapTip}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Status}" VerticalAlignment="Center"
+                                                   Opacity="0.85" FontSize="12"/>
+                                    </Grid>
+                                    <!-- 阶段进度条：运行中显示；有确定进度（镜头/批次）时按比例填充，否则不确定进度 -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8"
+                                                IsVisible="{Binding IsRunning}">
+                                        <ProgressBar Width="130" Height="6" Minimum="0" Maximum="1"
+                                                     Value="{Binding Progress}"
+                                                     IsIndeterminate="{Binding IsIndeterminate}"
+                                                     VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding ProgressText}" FontSize="11" Opacity="0.75"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <TextBlock Text="{Binding StatusText}" Classes="hint" TextWrapping="Wrap"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Command="{Binding RestorePipelineViewCommand}"
+                                IsVisible="{Binding IsViewingHistory}" Padding="10,4"
+                                VerticalContentAlignment="Center">
+                            <TextBlock Text="{i18n:Localize NovelHistoryRestore}" FontSize="12"/>
+                        </Button>
+                    </Grid>
+                </Grid>
+            </suki:GlassCard>
+
+            <suki:GlassCard Padding="14" Grid.Row="1">
+                <Grid RowDefinitions="Auto,*,Auto,Auto,Auto,Auto" RowSpacing="8">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <TextBlock Text="{Binding CurrentStageLabel, FallbackValue=阶段输出}" FontWeight="DemiBold"/>
+                        <Button Grid.Column="1" Command="{Binding CopyResultCommand}" IsEnabled="{Binding HasEditableText}"
+                                Content="{i18n:Localize CopyPrompt}" Foreground="{DynamicResource PrimaryBrush}" Margin="8,0,0,0"/>
+                        <Button Grid.Column="2" Command="{Binding SaveToLibraryCommand}" IsEnabled="{Binding HasEditableText}"
+                                Content="{i18n:Localize SaveToLibrary}" Foreground="{DynamicResource SuccessTextBrush}" Margin="8,0,0,0"/>
+                    </Grid>
+
+                    <TextBox Grid.Row="1" Text="{Binding EditableText, Mode=TwoWay}" AcceptsReturn="True"
+                             TextWrapping="Wrap" VerticalContentAlignment="Top" MinHeight="120"
+                             IsEnabled="{Binding !IsExecuting}"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                        <Button Command="{Binding GenerateGapPromptsCommand}" Padding="12,5"
+                                IsVisible="{Binding ShowGenerateGapBatchButton}" IsEnabled="{Binding CanGenerateGapBatch}"
+                                FontFamily="Microsoft YaHei UI">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsGeneratingGaps}"
+                                             Width="14" Height="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="{i18n:Localize NovelGenGapPrompts}"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding RegenerateGapPromptsCommand}" Padding="12,5"
+                                IsVisible="{Binding CanRegenerateGapPrompts}" IsEnabled="{Binding CanRegenerateGapPrompts}"
+                                FontFamily="Microsoft YaHei UI">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsGeneratingGaps}"
+                                             Width="14" Height="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="{i18n:Localize NovelRegenerateGapPrompts}"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding StopGapGenerationCommand}" Padding="12,5"
+                                IsVisible="{Binding IsGeneratingGaps}" IsEnabled="{Binding IsGeneratingGaps}"
+                                FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize Stop}"/>
+                        </Button>
+                        <Button Command="{Binding GoPrevGapBatchCommand}" Padding="12,5"
+                                IsVisible="{Binding CanGoPrevGapBatch}" FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize NovelPrevBatch}"/>
+                        </Button>
+                        <Button Command="{Binding GoNextGapBatchCommand}" Padding="12,5"
+                                IsVisible="{Binding CanGoNextGapBatch}" FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize NovelNextBatch}"/>
+                        </Button>
+                        <Button Command="{Binding ShowScanResultCommand}" Padding="12,5"
+                                IsVisible="{Binding CanShowScanResult}" FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize NovelShowScanResult}"/>
+                        </Button>
+                        <Button Command="{Binding GenerateAssetImagesCommand}" Padding="12,5"
+                                IsVisible="{Binding ShowGenerateAssetImagesButton}" IsEnabled="{Binding CanGenerateAssetImages}"
+                                FontFamily="Microsoft YaHei UI">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsGeneratingAssets}"
+                                             Width="14" Height="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="{i18n:Localize NovelAssetGenAuto}"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="{Binding GapProgressText}" Classes="hint"
+                                   VerticalAlignment="Center" IsVisible="{Binding HasGapBatches}"/>
+                    </StackPanel>
+
+                    <!-- 资产生图验收面板（v2 #4）：pending 缩略图列表 + 确认/删除 -->
+                    <Border Grid.Row="3" IsVisible="{Binding HasPendingAssets}"
+                            BorderBrush="#33000000" BorderThickness="1" CornerRadius="6" Padding="8">
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                <TextBlock Text="{i18n:Localize NovelAssetGenPending}" FontWeight="DemiBold"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding AssetGenStatus}" Classes="hint" FontSize="11"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                            <ListBox Grid.Row="1" ItemsSource="{Binding PendingAssets}"
+                                     SelectedItem="{Binding SelectedPendingAsset}" Height="96" BorderThickness="0"
+                                     Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Vertical" Spacing="4" Margin="4">
+                                            <Image Source="{Binding Preview}" Width="72" Height="72" Stretch="Uniform"
+                                                   MaxWidth="96"/>
+                                            <TextBlock Text="{Binding AssetName}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                                       MaxWidth="96" HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                                <Button Command="{Binding ConfirmAssetCommand}" IsEnabled="{Binding HasSelectedPendingAsset}"
+                                        Padding="10,4" FontFamily="Microsoft YaHei UI">
+                                    <TextBlock Text="{i18n:Localize NovelAssetGenAccept}"/>
+                                </Button>
+                                <Button Command="{Binding RejectAssetCommand}" IsEnabled="{Binding HasSelectedPendingAsset}"
+                                        Padding="10,4" FontFamily="Microsoft YaHei UI">
+                                    <TextBlock Text="{i18n:Localize NovelAssetGenReject}"/>
+                                </Button>
+                                <TextBlock Text="{i18n:Localize NovelAssetGenAcceptTip}" Classes="hint" FontSize="11"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Grid.Row="4" Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap"/>
+
+                    <Grid Grid.Row="5" ColumnDefinitions="Auto,Auto,Auto,*,Auto" ColumnSpacing="8">
+                        <Button Grid.Column="0" Command="{Binding ConfirmStageCommand}" IsEnabled="{Binding CanConfirm}"
+                                Background="{DynamicResource SuccessBrush}" Foreground="White"
+                                Padding="16,6" FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize NovelConfirmContinue}"/>
+                        </Button>
+                        <Button Grid.Column="1" Command="{Binding RerunStageCommand}" IsEnabled="{Binding CanRerun}"
+                                Padding="14,6" FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize NovelRerun}"/>
+                        </Button>
+                        <Button Grid.Column="2" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}"
+                                Padding="14,6" FontFamily="Microsoft YaHei UI">
+                            <TextBlock Text="{i18n:Localize NovelGoBack}"/>
+                        </Button>
+                        <TextBlock Grid.Column="3" Text="{i18n:Localize NovelEditableTip}" Classes="hint"
+                                   VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </Grid>
+                </Grid>
+            </suki:GlassCard>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,419 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:ctl="using:PromptCraft.Controls"
+             xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:ReverseCaptionViewModel"
+             x:Class="PromptCraft.ReverseCaptionView"
+             d:DesignWidth="1600" d:DesignHeight="960"
+             mc:Ignorable="d">
+
+    <!-- SukiUI ListBoxItem 默认主题自带"选中对勾"（PathIcon#CheckSelected，选中时显示蓝色圆圈对勾）；
+         素材列表不需要该标记，直接隐藏（本页两个 ListBox 同时生效） -->
+    <UserControl.Styles>
+        <Style Selector="ListBoxItem /template/ PathIcon#CheckSelected">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*" Margin="14" RowSpacing="10">
+
+        <!-- ==================== 顶部工具栏（对齐 PromptMaster 顶栏） ==================== -->
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="{i18n:Localize ReverseCaptionTitle}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Classes="primary" Command="{Binding RunBatchCommand}" IsEnabled="{Binding !IsBusy}"
+                        IsVisible="{Binding !IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <material:MaterialIcon Kind="PlayArrow"/>
+                        <TextBlock Text="{i18n:Localize ReverseStartLabel}"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="warning" Command="{Binding StopCommand}" IsEnabled="{Binding IsBusy}"
+                        IsVisible="{Binding IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <material:MaterialIcon Kind="Stop"/>
+                        <TextBlock Text="{i18n:Localize ReverseStopLabel}"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding ClearAssetsCommand}" IsEnabled="{Binding !IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <material:MaterialIcon Kind="DeleteSweep"/>
+                        <TextBlock Text="{i18n:Localize ReverseClearLabel}"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding PickMediaCommand}" IsEnabled="{Binding !IsBusy}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <material:MaterialIcon Kind="Plus"/>
+                        <TextBlock Text="{i18n:Localize ReverseAddAssetLabel}"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SaveBatchToLibraryCommand}" IsEnabled="{Binding !IsBusy}"
+                        Classes="accent">
+                    <TextBlock Text="{Binding BatchSaveLabel}"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- ==================== 主体：左参数 / 右素材+结果 ==================== -->
+        <Grid Grid.Row="1" ColumnDefinitions="360,*" ColumnSpacing="12">
+
+            <!-- ==================== 左栏：反推参数 ==================== -->
+            <suki:GlassCard Padding="18">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="10">
+
+                        <!-- 打标对象（torii 模型时锁定为仅图片可选） -->
+                        <TextBlock Text="{i18n:Localize ReverseTagTargetLabel}" Classes="form-label"/>
+                        <ComboBox ItemsSource="{Binding MediaTargetItems}" SelectedItem="{Binding SelectedMediaTarget}"
+                                  IsEnabled="{Binding !IsMediaTargetLocked}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Label}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Text="{Binding MediaTargetHint}" Classes="hint"/>
+
+                        <!-- 输出格式 -->
+                        <TextBlock Text="{i18n:Localize OutputFormatLabel}" Classes="form-label"/>
+                        <ComboBox ItemsSource="{Binding OutputFormatItems}" SelectedItem="{Binding SelectedOutputFormat}"
+                                  DisplayMemberBinding="{Binding Label}"/>
+
+                        <!-- 提示词工程（随输出格式过滤） -->
+                        <TextBlock Text="{i18n:Localize PromptEngineeringLabel}" Classes="form-label"/>
+                        <ComboBox x:Name="PeProfileCombo" ItemsSource="{Binding VisiblePeProfiles}" SelectedItem="{Binding SelectedPe}"
+                                  DisplayMemberBinding="{Binding Label}"
+                                  PointerWheelChanged="OnPeProfileComboWheel">
+                            <ComboBox.Styles>
+                                <Style Selector="ComboBoxItem">
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate DataType="vm:PeProfileOption">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="{Binding Label}" FontWeight="DemiBold"/>
+                                                    <TextBlock Text="{Binding Description}" Classes="hint"
+                                                               FontSize="11" MaxWidth="320"
+                                                               HorizontalAlignment="Left" TextAlignment="Left"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ComboBox.Styles>
+                        </ComboBox>
+
+                        <!-- 输出语言（torii 模型锁定英文；显示 中文/English） -->
+                        <TextBlock Text="{i18n:Localize ReverseOutputLangLabel}" Classes="form-label"/>
+                        <ComboBox ItemsSource="{Binding LangItems}" SelectedItem="{Binding SelectedLang}"
+                                  DisplayMemberBinding="{Binding Label}"
+                                  IsEnabled="{Binding !IsLangLocked}">
+                        </ComboBox>
+
+                        <!-- 打标模型（服务商） -->
+                        <TextBlock Text="{i18n:Localize ReverseTagModelLabel}" Classes="form-label"/>
+                        <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}"
+                                  DisplayMemberBinding="{Binding Name}"/>
+
+                        <!-- 服务商模型 -->
+                        <TextBlock Text="{i18n:Localize ReverseProviderModelLabel}" Classes="form-label"/>
+                        <ComboBox ItemsSource="{Binding SelectedProvider.Models}" SelectedItem="{Binding SelectedModel}"
+                                  DisplayMemberBinding="{Binding ModelName}"
+                                  PlaceholderText="{Binding ProviderModelPlaceholder}"/>
+
+                        <!-- 服务商模型空态提示 + 去配置（对齐 PromptMaster pm-online-model-hint） -->
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,4,0,0"
+                              IsVisible="{Binding !HasProviderModels}">
+                            <TextBlock Grid.Column="0" Text="{Binding ProviderModelEmptyText}" FontSize="12" Opacity="0.8"
+                                       TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Classes="accent" Command="{Binding GoSettingsCommand}" Padding="8,2" VerticalAlignment="Center">
+                                <TextBlock Text="{i18n:Localize TrainGoSettingsLabel}" FontSize="12"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- 质量提示词（tag 类工程显示） -->
+                        <StackPanel IsVisible="{Binding IsTagLinePe}" Spacing="6">
+                            <CheckBox IsChecked="{Binding QualityPromptEnabled}" Content="{i18n:Localize QualityPrefixLabel}"/>
+                            <StackPanel IsVisible="{Binding QualityPromptEnabled}" Spacing="4">
+                                <TextBlock Text="{i18n:Localize QualityPrefixPlaceholder}" Classes="form-label"/>
+                                <TextBox Text="{Binding QualityPromptPrefix, Mode=TwoWay}" AcceptsReturn="True"
+                                         TextWrapping="Wrap" MinHeight="66" VerticalContentAlignment="Top"
+                                         PlaceholderText="{i18n:Localize ReverseQualityTagsPlaceholder}"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 提示词长度 / 标签量（非 torii 工程显示） -->
+                        <StackPanel IsVisible="{Binding !IsToriiPe}" Spacing="4">
+                            <TextBlock Text="{Binding LengthLabel}" Classes="form-label"/>
+                            <ComboBox ItemsSource="{Binding LengthItems}" SelectedItem="{Binding SelectedLength}"
+                                      DisplayMemberBinding="{Binding Label}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsCustomLen}">
+                                <NumericUpDown Minimum="1" Maximum="20000" Increment="10"
+                                               Value="{Binding CustomLenChars}" Width="140"/>
+                                <TextBlock Text="{i18n:Localize CharCountHint}" VerticalAlignment="Center" Classes="hint"/>
+                            </StackPanel>                            <TextBlock Text="{Binding LengthHint}" Classes="hint"/>
+                        </StackPanel>
+
+                        <!-- 自定义提示词（placeholder 随 torii 工程切换中英文） -->
+                        <TextBlock Text="{i18n:Localize ReverseCustomPromptLabel}" Classes="form-label"/>
+                        <TextBox Text="{Binding ExtraPrompt, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top" MinHeight="72"
+                                 PlaceholderText="{Binding ExtraPromptPlaceholder}"/>
+
+                        <!-- Torii 更多设置 -->
+                        <Expander IsVisible="{Binding IsToriiPe}" Header="{i18n:Localize ReverseMoreSettingsHeader}">
+                            <StackPanel Spacing="8">
+                                <CheckBox IsChecked="{Binding ToriiUseNames}" Content="{i18n:Localize ReverseUseNamesLabel}"/>
+                                <TextBlock Text="{Binding ToriiUseNamesHint}" Classes="hint"/>
+                                <TextBlock Text="{i18n:Localize ReverseNamesListLabel}" Classes="form-label"/>
+                                <TextBox Text="{Binding ToriiGroundingCharacters, Mode=TwoWay}" AcceptsReturn="True"
+                                         TextWrapping="Wrap" MinHeight="44" VerticalContentAlignment="Top"
+                                         PlaceholderText="{i18n:Localize ReverseNamesPlaceholder}"/>
+                                <TextBlock Text="{Binding ToriiRoleListHint}" Classes="hint"/>
+                                <CheckBox IsChecked="{Binding ToriiAddTags}" Content="{i18n:Localize ReverseInjectTagsLabel}"/>
+                                <TextBlock Text="{Binding ToriiInjectHint}" Classes="hint"/>
+                                <TextBox Text="{Binding ToriiGroundingTags, Mode=TwoWay}" AcceptsReturn="True"
+                                         TextWrapping="Wrap" MinHeight="60" VerticalContentAlignment="Top"
+                                         IsEnabled="{Binding ToriiAddTags}"
+                                         PlaceholderText="{i18n:Localize ReverseInjectTagsPlaceholder}"/>
+                            </StackPanel>
+                        </Expander>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </suki:GlassCard>
+
+            <!-- ==================== 右栏：素材 + 结果（等高占满应用高度） ==================== -->
+            <Grid Grid.Column="1" RowDefinitions="*,*" RowSpacing="10">
+
+                <suki:GlassCard Padding="16">
+                    <Grid RowDefinitions="Auto,*">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding AssetsTitle}"
+                                       FontWeight="DemiBold" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{i18n:Localize ReverseDragMediaHint}" Classes="hint" VerticalAlignment="Center"/>
+                                <!-- 网格 / 卡片视图切换（对齐 PromptMaster media-grid / media-card） -->
+                                <ToggleButton IsChecked="{Binding IsGridView}" Padding="6,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <material:MaterialIcon Kind="ViewGrid" Width="14" Height="14"/>
+                                        <TextBlock Text="{i18n:Localize ReverseGridLabel}"/>
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton IsChecked="{Binding !IsGridView}" Padding="6,2">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <material:MaterialIcon Kind="ViewList" Width="14" Height="14"/>
+                                        <TextBlock Text="{i18n:Localize ReverseListLabel}"/>
+                                    </StackPanel>
+                                </ToggleButton>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- ===== 网格视图（对齐图库 ComfyGallery：等宽卡 + 缩略图 + 底部状态/操作） ===== -->
+                        <ListBox x:Name="AssetGrid" Grid.Row="1" Margin="0,10,0,0"
+                                 ItemsSource="{Binding Assets}" SelectedItem="{Binding SelectedAsset}"
+                                 IsVisible="{Binding IsGridView}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel ItemWidth="178"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="vm:ReverseMediaItem">
+                                    <Border Width="170" CornerRadius="8" Padding="6" Margin="4"
+                                            BorderThickness="2">
+                                        <Border.Styles>
+                                            <Style Selector="Border">
+                                                <Setter Property="Background" Value="{DynamicResource SukiDarkColor}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource SukiBorderBrush}"/>
+                                                <Setter Property="Cursor" Value="Hand"/>
+                                            </Style>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource SukiPrimaryColor}"/>
+                                            </Style>
+                                        </Border.Styles>
+                                        <StackPanel Spacing="5">
+                                            <!-- 缩略图区：图片卡显示缩略图；视频卡由 MediaVideoView 组件覆盖（复用 Test 已验证范式） -->
+                                            <Border x:Name="MediaArea" Height="120" CornerRadius="6" ClipToBounds="True"
+                                                    Background="{DynamicResource ChipDarkBrush}">
+                                                <Grid>
+                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                                           Width="158"
+                                                           IsVisible="{Binding !IsVideo}"/>
+                                                    <!-- 视频：复用 Test 已验证组件（MediaVideoView：自管理 LibVLC/播放器/封面 Popup/生命周期） -->
+                                                    <ctl:MediaVideoView VideoPath="{Binding Path}"
+                                                                        IsPlaying="{Binding IsPlaying, Mode=TwoWay}"
+                                                                        IsVisible="{Binding IsVideo}"/>
+                                                    <!-- 视频徽标（ReverseMediaKindVideo="视频"，无 {0} 占位符；MediaKindVideoLabel 带 {0} 不能直接 i18n 显示） -->
+                                                    <Border CornerRadius="3" Background="{DynamicResource ChipPinkBrush}" Padding="5,1"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
+                                                            IsVisible="{Binding IsVideo}">
+                                                        <TextBlock Text="{i18n:Localize ReverseMediaKindVideo}" FontSize="10" Foreground="White"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                                       FontSize="12" MaxWidth="158"/>
+                                            <!-- 底部：状态 tag + 进度 + 操作按钮。
+                                                 反推/删除同一行（小圆按钮）；播放/暂停换行居中（绿色圆，对齐扩写页素材卡样式） -->
+                                            <Grid RowDefinitions="Auto,Auto" RowSpacing="5">
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="5">
+                                                    <Border CornerRadius="8"
+                                                            Background="{Binding Status, Converter={x:Static vm:ReverseConv.StatusBrush}}"
+                                                            Padding="6,1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Status}" FontSize="10"
+                                                                   Foreground="{Binding Status, Converter={x:Static vm:ReverseConv.StatusForeground}}"/>
+                                                    </Border>
+                                                    <ProgressBar Grid.Column="1" Minimum="0" Maximum="100"
+                                                                 Value="{Binding Progress}" Height="3"
+                                                                 IsVisible="{Binding Status, Converter={x:Static vm:ReverseConv.IsProcessing}}"
+                                                                 VerticalAlignment="Center" Margin="0,0,0,0"/>
+                                                    <Button Grid.Column="2" Classes="round-start" Width="24" Height="24" Padding="0"
+                                                            Command="{Binding DataContext.ReverseSingleCommand, ElementName=AssetGrid}"
+                                                            CommandParameter="{Binding}" ToolTip.Tip="{i18n:Localize ReverseCurrentTip}">
+                                                        <material:MaterialIcon Kind="PlayArrow" Width="12" Height="12"/>
+                                                    </Button>
+                                                    <Button Grid.Column="3" Classes="round-danger" Width="24" Height="24" Padding="0"
+                                                            Command="{Binding DataContext.RemoveAssetCommand, ElementName=AssetGrid}"
+                                                            CommandParameter="{Binding}" ToolTip.Tip="{i18n:Localize ReverseRemoveTip}">
+                                                        <material:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                                    </Button>
+                                                </Grid>
+                                                <Button Grid.Row="1" IsVisible="{Binding IsVideo}" HorizontalAlignment="Center"
+                                                        Width="28" Height="28" CornerRadius="14" Padding="0"
+                                                        Background="{DynamicResource SuccessBrush}" Foreground="White"
+                                                        Classes="NoPressedAnimation"
+                                                        Click="OnMediaPlayClicked" ToolTip.Tip="{i18n:Localize ReversePlayPauseTip}">
+                                                    <material:MaterialIcon
+                                                        Kind="{Binding IsPlaying, Converter={x:Static vm:ReverseConv.PlayingToIcon}}"
+                                                        Width="14" Height="14"/>
+                                                </Button>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- ===== 卡片（列表）视图：缩略图 + 名称，状态/操作在下方 ===== -->
+                        <ListBox x:Name="AssetList" Grid.Row="1" Margin="0,10,0,0"
+                                 ItemsSource="{Binding Assets}" SelectedItem="{Binding SelectedAsset}"
+                                 IsVisible="{Binding !IsGridView}"
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="vm:ReverseMediaItem">
+                                    <Border CornerRadius="8" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="1"
+                                            Margin="0,0,0,8" Padding="10">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <Border x:Name="MediaArea" Width="56" Height="56" CornerRadius="6" Background="{DynamicResource ChipDarkBrush}"
+                                                    ClipToBounds="True" VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Image Source="{Binding Thumbnail}" Stretch="Uniform"
+                                                           IsVisible="{Binding !IsVideo}"/>
+                                                    <!-- 视频：复用 Test 已验证组件（MediaVideoView） -->
+                                                    <ctl:MediaVideoView VideoPath="{Binding Path}"
+                                                                        IsPlaying="{Binding IsPlaying, Mode=TwoWay}"
+                                                                        IsVisible="{Binding IsVideo}"/>
+                                                    <Border CornerRadius="2" Background="{DynamicResource ChipPinkBrush}" Padding="4,0"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Top" Margin="2"
+                                                            IsVisible="{Binding IsVideo}">
+                                                        <TextBlock Text="{i18n:Localize ReverseMediaKindVideo}" FontSize="8" Foreground="White"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="6">
+                                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                                           FontSize="13"/>
+                                                <!-- 状态 tag + 进度 + 操作按钮（反推/删除同排小圆；播放/暂停换行居中，对齐扩写页素材卡） -->
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <Border CornerRadius="8"
+                                                            Background="{Binding Status, Converter={x:Static vm:ReverseConv.StatusBrush}}"
+                                                            Padding="6,1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Status}" FontSize="10"
+                                                                   Foreground="{Binding Status, Converter={x:Static vm:ReverseConv.StatusForeground}}"/>
+                                                    </Border>
+                                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}"
+                                                                 Height="3" Width="110"
+                                                                 IsVisible="{Binding Status, Converter={x:Static vm:ReverseConv.IsProcessing}}"
+                                                                 VerticalAlignment="Center"/>
+                                                    <Button Classes="round-start" Width="24" Height="24" Padding="0"
+                                                            Command="{Binding DataContext.ReverseSingleCommand, ElementName=AssetList}"
+                                                            CommandParameter="{Binding}" ToolTip.Tip="{i18n:Localize ReverseCurrentTip}">
+                                                        <material:MaterialIcon Kind="PlayArrow" Width="12" Height="12"/>
+                                                    </Button>
+                                                    <Button Classes="round-danger" Width="24" Height="24" Padding="0"
+                                                            Command="{Binding DataContext.RemoveAssetCommand, ElementName=AssetList}"
+                                                            CommandParameter="{Binding}" ToolTip.Tip="{i18n:Localize ReverseRemoveTip}">
+                                                        <material:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                                    </Button>
+                                                </StackPanel>
+                                                <!-- 播放/暂停（仅视频）：换行居中，绿色圆，与扩写页素材卡一致 -->
+                                                <Button IsVisible="{Binding IsVideo}" HorizontalAlignment="Left"
+                                                        Width="28" Height="28" CornerRadius="14" Padding="0"
+                                                        Background="{DynamicResource SuccessBrush}" Foreground="White"
+                                                        Classes="NoPressedAnimation"
+                                                        Click="OnMediaPlayClicked" ToolTip.Tip="{i18n:Localize ReversePlayPauseTip}">
+                                                    <material:MaterialIcon
+                                                        Kind="{Binding IsPlaying, Converter={x:Static vm:ReverseConv.PlayingToIcon}}"
+                                                        Width="14" Height="14"/>
+                                                </Button>
+                                                <!-- 反推结果（对齐 PM 图文卡片：完成后直接显示，可编辑或复制） -->
+                                                <TextBox Text="{Binding Caption, Mode=TwoWay}" AcceptsReturn="True"
+                                                         TextWrapping="Wrap" MinHeight="56" FontSize="11"
+                                                         PlaceholderText="{i18n:Localize ReverseResultPlaceholder}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </suki:GlassCard>
+
+                <!-- ==================== 反推结果（选中项，与素材等高） ==================== -->
+                <suki:GlassCard Grid.Row="1" Padding="16">
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                            <TextBlock Text="{i18n:Localize ReverseResultTitle}" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" Command="{Binding CopySelectedCommand}"
+                                    IsEnabled="{Binding SelectedCaption, Converter={x:Static vm:ReverseConv.IsNotEmpty}}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <material:MaterialIcon Kind="ContentCopy" Width="14" Height="14"/>
+                                    <TextBlock Text="{i18n:Localize ReverseCopyLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding SaveSelectedToLibraryCommand}"
+                                    IsEnabled="{Binding SelectedCaption, Converter={x:Static vm:ReverseConv.IsNotEmpty}}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <material:MaterialIcon Kind="LibraryAdd" Width="14" Height="14"/>
+                                    <TextBlock Text="{i18n:Localize ReverseSaveToLibraryLabel}"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <TextBox Grid.Row="1" Text="{Binding SelectedAsset.Caption, Mode=TwoWay}" AcceptsReturn="True"
+                                 TextWrapping="Wrap" VerticalContentAlignment="Top"
+                                 PlaceholderText="{i18n:Localize ReverseEmptyResultPlaceholder}"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding SelectedAsset.Path}" Classes="hint" FontSize="11"
+                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SelectedCaptionLengthText}"
+                                       Classes="hint" FontSize="11" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Grid>
+                </suki:GlassCard>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

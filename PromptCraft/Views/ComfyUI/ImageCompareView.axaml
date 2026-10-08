@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             xmlns:svc="using:PromptCraft.Service"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="1000" d:DesignHeight="820"
+             x:DataType="vm:ImageCompareModel"
+             x:Class="PromptCraft.Views.ComfyUI.ImageCompareView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="0" RowSpacing="0">
+
+        <!-- Row 0: 标题 + 交换 -->
+        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="{Binding LeftName}" FontWeight="Bold" FontSize="14"
+                           Foreground="{DynamicResource DiffLeftBrush}" MaxWidth="340" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="vs" FontSize="13" Foreground="Gray" />
+                <TextBlock Text="{Binding RightName}" FontWeight="Bold" FontSize="14"
+                           Foreground="{DynamicResource WarningTextBrush}" MaxWidth="340" TextTrimming="CharacterEllipsis" />
+                <Border CornerRadius="4" Background="{DynamicResource SukiDarkColor}" Padding="6,2">
+                    <TextBlock Text="{Binding SplitPercent}" FontSize="11" Foreground="Gray" />
+                </Border>
+            </StackPanel>
+            <Button Grid.Column="1" Command="{Binding SwapImagesCommand}"
+                    Content="{i18n:Localize SwapSides}" Padding="10,4" FontWeight="DemiBold" />
+        </Grid>
+
+        <!-- Row 1: 滑动对比画布（鼠标左侧显示图A，右侧显示图B） -->
+        <Border Grid.Row="1" Name="CompareCanvas" Height="440" ClipToBounds="True"
+                Background="{DynamicResource PanelDarkerBrush}" CornerRadius="8"
+                PointerMoved="OnComparePointerMoved"
+                PointerPressed="OnComparePointerPressed"
+                DoubleTapped="OnCompareDoubleTapped"
+                SizeChanged="OnCompareSizeChanged">
+            <Grid>
+                <!-- 下层：图B（右半可见） -->
+                <Image Source="{Binding RightBitmap}" Stretch="Uniform" />
+                <!-- 上层：图A（按分割位置裁剪，左半可见；Clip 由 code-behind 直接维护） -->
+                <Image x:Name="LeftImage" Source="{Binding LeftBitmap}" Stretch="Uniform" IsHitTestVisible="False" />
+                <!-- 分割线（仅保留细竖线，位置由 code-behind 直接维护） -->
+                <Canvas x:Name="SplitCanvas" IsHitTestVisible="False">
+                    <Rectangle x:Name="SplitLine" Width="2" Fill="{DynamicResource PrimaryBrush}" />
+                </Canvas>
+                <!-- 加载占位 -->
+                <TextBlock Text="{i18n:Localize Loading}" Foreground="Gray" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" IsVisible="{Binding IsLoading}" />
+                <StackPanel IsVisible="{Binding !IsLoading}" Spacing="4"
+                            HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                    <TextBlock Text="{i18n:Localize CompareHint}"
+                               FontSize="11" Foreground="Gray" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Row 2: 元数据对比（差异高亮） -->
+        <ScrollViewer Grid.Row="2" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8">
+
+                <!-- 字段级差异 -->
+                <StackPanel IsVisible="{Binding HasMetadata}" Spacing="2">
+                    <TextBlock Text="{i18n:Localize GenParamsDiff}" FontSize="13" FontWeight="DemiBold" />
+                    <ItemsControl ItemsSource="{Binding FieldDiffs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:FieldDiffItem">
+                                <Border CornerRadius="4" Padding="8,4" Margin="0,1"
+                                        Background="{Binding DiffBackground}">
+                                    <Grid ColumnDefinitions="110,*,*">
+                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="DemiBold"
+                                                       Foreground="{Binding LabelBrush}" />
+                                            <TextBlock Text="≠" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource DiffChangeBrush}"
+                                                       IsVisible="{Binding IsDifferent}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding LeftText}" FontSize="12"
+                                                   TextWrapping="Wrap" Foreground="{Binding LeftBrush}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding RightText}" FontSize="12"
+                                                   TextWrapping="Wrap" Foreground="{Binding RightBrush}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- 正提示词字符级 diff（两图都无正提示词时隐藏；相同也显示为灰色无高亮） -->
+                <StackPanel IsVisible="{Binding HasPositivePrompt}" Spacing="2">
+                    <TextBlock Text="{i18n:Localize PositivePromptDiff}" FontSize="13" FontWeight="DemiBold" />
+                    <Border CornerRadius="6" Background="{DynamicResource SukiBorderBrush}" Padding="8" Margin="0,1">
+                        <ItemsControl ItemsSource="{Binding PositiveSegments}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TextDiffSegmentItem">
+                                    <Border Background="{Binding Background}" CornerRadius="2" Margin="0,1">
+                                        <TextBlock Text="{Binding Text}" Foreground="{Binding Foreground}"
+                                                   TextWrapping="Wrap" FontSize="12" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </StackPanel>
+
+                <!-- 负提示词字符级 diff（两图都无负提示词时隐藏；相同也显示为灰色无高亮） -->
+                <StackPanel IsVisible="{Binding HasNegativePrompt}" Spacing="2">
+                    <TextBlock Text="{i18n:Localize NegativePromptDiff}" FontSize="13" FontWeight="DemiBold" />
+                    <Border CornerRadius="6" Background="{DynamicResource SukiBorderBrush}" Padding="8" Margin="0,1">
+                        <ItemsControl ItemsSource="{Binding NegativeSegments}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TextDiffSegmentItem">
+                                    <Border Background="{Binding Background}" CornerRadius="2" Margin="0,1">
+                                        <TextBlock Text="{Binding Text}" Foreground="{Binding Foreground}"
+                                                   TextWrapping="Wrap" FontSize="12" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </StackPanel>
+
+                <!-- 工作流节点级 diff -->
+                <StackPanel IsVisible="{Binding HasMetadata}" Spacing="2">
+                    <TextBlock Text="{i18n:Localize WorkflowNodeDiff}" FontSize="13" FontWeight="DemiBold" />
+                    <TextBlock Text="{Binding WorkflowSummary}" FontSize="12" Foreground="Gray" TextWrapping="Wrap" />
+                    <ItemsControl ItemsSource="{Binding NodeDiffs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NodeDiffItem">
+                                <Border CornerRadius="6" Background="{DynamicResource SukiBorderBrush}"
+                                        Padding="8" Margin="0,2">
+                                    <StackPanel Spacing="3">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding Summary}" FontSize="12" FontWeight="DemiBold" />
+                                            <TextBlock Text="{Binding ClassType}" FontSize="11"
+                                                       Foreground="Gray" />
+                                            <TextBlock Text="Node #{Binding NodeId}" FontSize="11"
+                                                       Foreground="Gray" />
+                                        </StackPanel>
+                                        <ItemsControl ItemsSource="{Binding Changes}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="svc:FieldDiff">
+                                                    <Grid ColumnDefinitions="100,*,16,*">
+                                                        <TextBlock Grid.Column="0" Text="{Binding Field}"
+                                                                   FontSize="11" FontWeight="DemiBold" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding Left}"
+                                                                   FontSize="11" TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource DiffLeftBrush}" />
+                                                        <TextBlock Grid.Column="2" Text="→" FontSize="11"
+                                                                   Foreground="Gray" HorizontalAlignment="Center" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding Right}"
+                                                                   FontSize="11" TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource WarningTextBrush}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- 无元数据占位 -->
+                <TextBlock IsVisible="{Binding !HasMetadata}" Text="{i18n:Localize NoMetadataCompare}"
+                           FontSize="12" Foreground="Gray" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Row 3: 底部提示 -->
+        <TextBlock Grid.Row="3" Margin="0,6,0,0" FontSize="11" Foreground="Gray"
+                   Text="{i18n:Localize CompareBasis}" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,85 @@
+<!--
+    全局语义色资源（唯一颜色来源）：
+    各 View 不得再硬编码 #hex，统一引用本字典中的 Brush。
+    命名规约：<语义>Brush；hover/pressed 用 <语义>Hover/PressedBrush。
+-->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- 主题化资源：暗主题 10% 白 / 亮主题 10% 黑，随 ThemeVariant 自动切换（表格交替行背景） -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="TableRowAltBrush" Color="#14FFFFFF"/>
+            <SolidColorBrush x:Key="TableGridLineBrush" Color="#1FFFFFFF"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="TableRowAltBrush" Color="#14000000"/>
+            <SolidColorBrush x:Key="TableGridLineBrush" Color="#1F000000"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <!-- 品牌主色（蓝） -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#0078D4"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#2F6FE0"/>
+    <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#275EC2"/>
+    <!-- 信息蓝（区别于品牌主色的浅蓝） -->
+    <SolidColorBrush x:Key="InfoBrush" Color="#3B82F6"/>
+    <SolidColorBrush x:Key="InfoHoverBrush" Color="#2F6FE0"/>
+    <SolidColorBrush x:Key="PrimaryTintBrush" Color="#1A0078D4"/>
+    <!-- 危险 / 删除（红） -->
+    <SolidColorBrush x:Key="DangerBrush" Color="#E81123"/>
+    <SolidColorBrush x:Key="DangerHoverBrush" Color="#C50F1F"/>
+    <SolidColorBrush x:Key="DangerPressedBrush" Color="#A50D19"/>
+    <SolidColorBrush x:Key="DangerAltBrush" Color="#E53935"/>
+    <SolidColorBrush x:Key="DangerSoftBrush" Color="#F44336"/>
+    <SolidColorBrush x:Key="DangerDeepBrush" Color="#C62828"/>
+    <SolidColorBrush x:Key="DangerSoftTextBrush" Color="#E06060"/>
+    <SolidColorBrush x:Key="DangerDisabledBrush" Color="#5A1218"/>
+    <SolidColorBrush x:Key="DangerTintBrush" Color="#33E81123"/>
+    <!-- 警示 / 橙 -->
+    <SolidColorBrush x:Key="WarningBrush" Color="#FF9800"/>
+    <SolidColorBrush x:Key="WarningTextBrush" Color="#E8862E"/>
+    <SolidColorBrush x:Key="WarningTintBrush" Color="#33FF9800"/>
+    <!-- 成功 / 绿 -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="#22C55E"/>
+    <SolidColorBrush x:Key="SuccessTextBrush" Color="#2E7D32"/>
+    <!-- 强调 / 品红 -->
+    <SolidColorBrush x:Key="PinkAccentBrush" Color="#E91E63"/>
+    <!-- 文字 -->
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#808080"/>
+    <SolidColorBrush x:Key="DarkTextBrush" Color="#555555"/>
+    <SolidColorBrush x:Key="LightTextBrush" Color="#FAFAFA"/>
+    <SolidColorBrush x:Key="SoftTextBrush" Color="#DDD"/>
+    <!-- 遮罩（半透明黑，按浓度分级） -->
+    <SolidColorBrush x:Key="OverlayLightBrush" Color="#22000000"/>
+    <SolidColorBrush x:Key="OverlayMediumBrush" Color="#80000000"/>
+    <SolidColorBrush x:Key="OverlayHeavyBrush" Color="#99000000"/>
+    <SolidColorBrush x:Key="OverlaySolidBrush" Color="#AA000000"/>
+    <SolidColorBrush x:Key="OverlayBlackBrush" Color="#88000000"/>
+    <!-- 深色面板 -->
+    <SolidColorBrush x:Key="PanelDarkBrush" Color="#22272E"/>
+    <SolidColorBrush x:Key="PanelDarkerBrush" Color="#15171B"/>
+    <SolidColorBrush x:Key="ThemePreviewDarkBrush" Color="#222222"/>
+    <!-- 半透明 chip 背景 -->
+    <SolidColorBrush x:Key="ChipWhiteBrush" Color="#22FFFFFF"/>
+    <SolidColorBrush x:Key="ChipWhiteDimBrush" Color="#20FFFFFF"/>
+    <SolidColorBrush x:Key="ChipWhiteThinBrush" Color="#12FFFFFF"/>
+    <SolidColorBrush x:Key="ChipWhiteFaintBrush" Color="#10FFFFFF"/>
+    <SolidColorBrush x:Key="ChipDarkBrush" Color="#16000000"/>
+    <SolidColorBrush x:Key="ChipPinkBrush" Color="#AAE91E63"/>
+    <SolidColorBrush x:Key="ChipGreyBrush" Color="#66707070"/>
+    <SolidColorBrush x:Key="ChipBlueBrush" Color="#663A82F6"/>
+    <!-- 边框 -->
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="#33000000"/>
+    <SolidColorBrush x:Key="BorderDashedBrush" Color="#66888888"/>
+    <!-- 交互辅助 -->
+    <SolidColorBrush x:Key="HoverLightBlueBrush" Color="#7EC8FF"/>
+    <SolidColorBrush x:Key="SelectionBrush" Color="#664080FF"/>
+    <SolidColorBrush x:Key="WhiteHoverBrush" Color="#33FFFFFF"/>
+    <SolidColorBrush x:Key="WhiteDimHoverBrush" Color="#140078D4"/>
+    <!-- 蓝底白字标签（Tag 管理） -->
+    <SolidColorBrush x:Key="TagBlueBrush" Color="#3B82F6"/>
+    <!-- NSFW 徽标 -->
+    <SolidColorBrush x:Key="NsfwBrush" Color="#CC4444"/>
+    <!-- 对比视图差异色 -->
+    <SolidColorBrush x:Key="DiffLeftBrush" Color="#4A90E2"/>
+    <SolidColorBrush x:Key="DiffChangeBrush" Color="#C0392B"/>
+</ResourceDictionary>

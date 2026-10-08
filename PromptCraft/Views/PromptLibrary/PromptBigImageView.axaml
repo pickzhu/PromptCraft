@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.PromptLibrary"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="720" d:DesignHeight="640"
+             x:DataType="vm:PromptCardItem"
+             x:Class="PromptCraft.Views.PromptLibrary.PromptBigImageView"
+             mc:Ignorable="d">
+
+    <!-- 封面大图预览：对齐 PromptMaster pm-cover-preview（大图预览；封面拖拽导出已移除） -->
+    <Grid RowDefinitions="*,Auto" RowSpacing="10">
+        <Border CornerRadius="8" ClipToBounds="True" Background="{DynamicResource OverlayLightBrush}"
+                BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1">
+            <Grid>
+                <Image Source="{Binding CoverBitmap}" Stretch="Uniform"
+                       IsVisible="{Binding CoverBitmap, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                <TextBlock Text="{i18n:Localize PromptNoCover}" FontSize="12" Foreground="Gray"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsVisible="{Binding CoverBitmap, Converter={x:Static ObjectConverters.IsNull}}" />
+            </Grid>
+        </Border>
+        <!-- 底部仅保留拖拽导出提示（"封面"按钮已按拍板移除，关闭走宿主 foot） -->
+        <Grid Grid.Row="1" ColumnDefinitions="*">
+            <TextBlock FontSize="12" Foreground="Gray" VerticalAlignment="Center"
+                       Text="{i18n:Localize PromptBigImageDragTip}" TextWrapping="Wrap" />
+        </Grid>
+    </Grid>
+</UserControl>

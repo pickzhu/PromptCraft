@@ -1,0 +1,81 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:local="using:PromptCraft"
+             xmlns:ifc="using:PromptCraft.Interfaces"
+             d:DesignWidth="1100" d:DesignHeight="700"
+             x:DataType="vm:LogViewModel"
+             x:Class="PromptCraft.LogView"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <local:LogLevelToBrushConverter x:Key="LevelBrush" />
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="16" RowSpacing="8">
+
+        <!-- 工具栏 -->
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto">
+            <TextBlock Text="{i18n:Localize LogLevel}" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{Binding LevelFilterItems}"
+                      SelectedItem="{Binding SelectedLevelFilter}"
+                      MinWidth="92" />
+            <TextBox Grid.Column="2"
+                     Text="{Binding Keyword}"
+                     PlaceholderText="{i18n:Localize LogKeywordPlaceholder}"
+                     Classes="Borderless" Margin="10,0,0,0" />
+            <TextBlock Grid.Column="3"
+                       Text="{Binding ErrorCountText}"
+                       Foreground="IndianRed" FontWeight="Bold"
+                       VerticalAlignment="Center" Margin="12,0,6,0" />
+            <Button Grid.Column="4" Classes="Primary" Margin="4,0,0,0"
+                    Command="{Binding ClearLogCommand}"
+                    Content="{i18n:Localize LogClear}" />
+            <Button Grid.Column="5" Classes="Primary" Margin="4,0,0,0"
+                    Command="{Binding OpenLogFolderCommand}"
+                    Content="{i18n:Localize LogOpenFolder}" />
+            <Button Grid.Column="6" Classes="Primary" Margin="4,0,0,0"
+                    Command="{Binding ExportErrorsCommand}"
+                    Content="{i18n:Localize LogExport}" />
+        </Grid>
+
+        <!-- 状态栏 -->
+        <TextBlock Grid.Row="1" Text="{Binding Status}"
+                   Foreground="{DynamicResource SukiLowText}" TextWrapping="Wrap" />
+
+        <!-- 日志列表（双击复制该条日志） -->
+        <ListBox x:Name="LogList" Grid.Row="2" ItemsSource="{Binding Entries}"
+                 Background="Transparent" DoubleTapped="OnLogDoubleTapped">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="ifc:LogEntry">
+                    <Border Padding="6" CornerRadius="4"
+                            BorderBrush="{DynamicResource SukiBorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="Auto,Auto,*">
+                            <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss.fff}'}"
+                                       Foreground="Gray" VerticalAlignment="Top" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding LevelText}"
+                                       Foreground="{Binding Level, Converter={StaticResource LevelBrush}}"
+                                       FontWeight="Bold" Margin="8,0,0,0" MinWidth="52"
+                                       VerticalAlignment="Top" />
+                            <StackPanel Grid.Column="2" Margin="8,0,0,0" Spacing="2">
+                                <TextBlock Text="{Binding Category}"
+                                           Foreground="{DynamicResource SukiLowText}"
+                                           FontSize="11" />
+                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding ExceptionText}" TextWrapping="Wrap"
+                                           Foreground="IndianRed" FontSize="12"
+                                           IsVisible="{Binding IsError}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

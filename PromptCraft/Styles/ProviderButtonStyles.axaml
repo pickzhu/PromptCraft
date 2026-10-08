@@ -1,0 +1,77 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 圆形图标按钮：编辑类（蓝） -->
+    <Style Selector="Button.IconCircle">
+        <Setter Property="Width" Value="26"/>
+        <Setter Property="Height" Value="26"/>
+        <Setter Property="CornerRadius" Value="13"/>
+        <Setter Property="BorderBrush" Value="#0078D4"/>
+        <Setter Property="Foreground" Value="#0078D4"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.IconCircle:pointerover">
+        <Setter Property="Background" Value="#0078D4"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="#0078D4"/>
+    </Style>
+
+    <!-- 圆形图标按钮：删除类（红） -->
+    <Style Selector="Button.CircleDelete">
+        <Setter Property="Width" Value="26"/>
+        <Setter Property="Height" Value="26"/>
+        <Setter Property="CornerRadius" Value="13"/>
+        <Setter Property="BorderBrush" Value="#E53935"/>
+        <Setter Property="Foreground" Value="#E53935"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.CircleDelete:pointerover">
+        <Setter Property="Background" Value="#E53935"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="#E53935"/>
+    </Style>
+
+    <!-- 圆形开始按钮（主色；Expand / ReverseCaption 素材操作共用） -->
+    <Style Selector="Button.round-start">
+        <Setter Property="Width" Value="30"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="CornerRadius" Value="15"/>
+        <Setter Property="Background" Value="#140078D4"/>
+        <Setter Property="BorderBrush" Value="#0078D4"/>
+        <Setter Property="Foreground" Value="#0078D4"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.round-start:pointerover">
+        <Setter Property="Background" Value="#FF0078D4"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="#0078D4"/>
+    </Style>
+
+    <!-- 圆形删除按钮（红边框红字；hover 红底白字） -->
+    <Style Selector="Button.round-danger">
+        <Setter Property="Width" Value="30"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="CornerRadius" Value="15"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="#E81123"/>
+        <Setter Property="Foreground" Value="#E81123"/>
+        <Setter Property="BorderThickness" Value="1.5"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="Button.round-danger:pointerover">
+        <Setter Property="Background" Value="#E81123"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderBrush" Value="#E81123"/>
+    </Style>
+</Styles>

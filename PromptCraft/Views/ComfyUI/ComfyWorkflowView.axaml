@@ -1,0 +1,139 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:controls="using:PromptCraft.Controls"
+             xmlns:vm="using:PromptCraft.ViewModels.ComfyUI"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:DataType="vm:ComfyWorkflowModel"
+             x:Class="PromptCraft.Views.ComfyUI.ComfyWorkflowView">
+
+    <Grid>
+        <!-- 内容区（带边距：工具栏 / 状态行 / 列表） -->
+        <Grid RowDefinitions="Auto,Auto,*" Margin="16" RowSpacing="0">
+            <!-- 顶部工具栏（同步|刷新|搜索|多选标签|标签管理） -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,0,0,8">
+                <Button x:Name="SyncBtn" Grid.Column="0" Command="{Binding SyncFromComfyCommand}"
+                        IsEnabled="{Binding !IsSyncing}" MinWidth="90">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="⟳" FontSize="14"/>
+                        <TextBlock Text="{Binding SyncButtonText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="1" Margin="8,0,0,0" Command="{Binding RefreshWorkflowsCommand}"
+                        ToolTip.Tip="{i18n:Localize RefreshList}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="{i18n:Localize RefreshList}" FontSize="14"/>
+                    </StackPanel>
+                </Button>
+
+                <TextBox Grid.Column="2" Text="{Binding SearchText}"
+                         PlaceholderText="{i18n:Localize SearchWorkflowPlaceholder}" Classes="Borderless" Margin="12,0,0,0" />
+
+                <!-- 多选标签下拉（复用图库组件，Tag 表共用） -->
+                <controls:MultiSelectDropDown Grid.Column="3" Margin="8,0,0,0"
+                                              ItemsSource="{Binding AvailableTags}"
+                                              SelectedDisplayText="{Binding SelectedTagsSummary}" />
+
+                <!-- 标签管理（打开封装抽屉组件） -->
+                <Button Grid.Column="4" Content="{i18n:Localize ManageTags}" Command="{Binding OpenTagDrawerCommand}"
+                        Padding="8,4" FontWeight="DemiBold" Margin="4,0,0,0" />
+            </Grid>
+
+            <!-- 状态行：共 x 个工作流（左），刷新进度条（右） -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="12"
+                           Foreground="Gray" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <ProgressBar Grid.Column="1" IsIndeterminate="True" Width="120"
+                             IsVisible="{Binding IsLoading}" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- 工作流卡片列表：双击打开详情 -->
+            <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Workflows}" Margin="0,4,0,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WorkflowItem">
+                            <Border Width="180" Margin="5" CornerRadius="8" ClipToBounds="True"
+                                    BorderThickness="1"
+                                    BorderBrush="{DynamicResource SukiBorderBrush}"
+                                    Background="{DynamicResource SukiCardBrush}"
+                                    PointerPressed="OnCardPointerPressed">
+                                <StackPanel>
+                                    <Border Height="130" ClipToBounds="True">
+                                        <Grid>
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            <Border IsVisible="{Binding IsSelected}"
+                                                    Background="{DynamicResource WhiteHoverBrush}" BorderThickness="0"/>
+                                        </Grid>
+                                    </Border>
+                                    <Grid ColumnDefinitions="*,Auto" Margin="8,6,8,4">
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold"
+                                                   FontSize="13" TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1" IsVisible="{Binding ShowBadge}"
+                                                Background="{DynamicResource ChipWhiteDimBrush}" CornerRadius="4" Padding="4,1" Margin="4,0,0,0">
+                                            <TextBlock Text="{Binding SourceBadge}" FontSize="11" Foreground="Gray"/>
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Text="{Binding UpdatedText}" FontSize="11" Foreground="Gray" Margin="8,0,8,4"/>
+                                    <!-- 标签色块（与图库卡片一致） -->
+                                    <ItemsControl ItemsSource="{Binding Tags}" Margin="6,0,6,6">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:TagDisplay">
+                                                <Border CornerRadius="3" Background="{Binding Color}" Padding="4,1"
+                                                        Margin="2" MaxWidth="70">
+                                                    <TextBlock Text="{Binding Name}" FontSize="9" Foreground="White"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- 标签管理抽屉（封装组件：新建/重命名/删除统一实现，变更后自动刷新本页下拉与列表） -->
+        <controls:TagManagerDrawer DataContext="{Binding TagDrawer}" />
+
+        <!-- 工作流卡片右键菜单：加入文件夹（文件夹浏览统一走文件夹管理页） -->
+        <Popup x:Name="WorkflowContextPopup" Placement="Pointer" IsLightDismissEnabled="True"
+               HorizontalOffset="0" VerticalOffset="0">
+            <Border CornerRadius="6" Background="{DynamicResource SukiCardBackground}"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1"
+                    BoxShadow="0 4 14 #55000000">
+                <StackPanel MinWidth="196">
+                    <TextBlock x:Name="WorkflowContextTitle" FontSize="11" Foreground="{DynamicResource SukiLowText}"
+                               Padding="16,8,16,4" />
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+                    <Button Content="{i18n:Localize AddToFolder}" Click="OnAddToFolderMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:PromptEngineeringViewModel"
+             x:Class="PromptCraft.PromptEngineeringView"
+             x:Name="Root"
+             d:DesignWidth="1600" d:DesignHeight="960"
+             mc:Ignorable="d">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.form-label">
+            <Setter Property="FontWeight" Value="DemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,2,0,4"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,*" Margin="14" RowSpacing="10">
+
+        <!-- ==================== 顶部（对齐 PromptMaster：标题 + 导入 JSON / 新建） ==================== -->
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Command="{Binding OpenImportCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <material:MaterialIcon Kind="Import"/>
+                        <TextBlock Text="{i18n:Localize PeImportJsonLabel}"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="primary" Command="{Binding NewCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <material:MaterialIcon Kind="Plus"/>
+                        <TextBlock Text="{i18n:Localize PeCreateNewLabel}"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- ==================== 主体：Tab + 筛选 + 表格 ==================== -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" RowSpacing="10">
+
+            <!-- 分类 Tab（默认扩写，对齐 PromptMaster） -->
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <RadioButton GroupName="peKind" Content="{i18n:Localize KindExpand}" IsChecked="{Binding IsKindExpand}"/>
+                <RadioButton GroupName="peKind" Content="{i18n:Localize KindReverse}" IsChecked="{Binding IsKindReverse}"/>
+                <RadioButton GroupName="peKind" Content="{i18n:Localize KindTrain}" IsChecked="{Binding IsKindTrain}"/>
+            </StackPanel>
+
+            <!-- 筛选行：输出格式（按分类联动）/ 搜索 / 共 N 条 / 清除筛选（控件高度统一，以筛选下拉为准） -->
+            <Grid Grid.Row="1" ColumnDefinitions="180,*,Auto,Auto" ColumnSpacing="8">
+                <ComboBox ItemsSource="{Binding OutputFormatOptions}"
+                          SelectedItem="{Binding SelectedOutputFormatOption}"
+                          DisplayMemberBinding="{Binding Label}"
+                          PlaceholderText="{i18n:Localize PeFormatFilterPlaceholder}"
+                          HorizontalAlignment="Stretch" Height="34" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding SearchText}" PlaceholderText="{i18n:Localize PeSearchPlaceholder}"
+                         Height="34" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding CountLabel}" VerticalAlignment="Center" Opacity="0.8"/>
+                <Button Grid.Column="3" Command="{Binding ClearFilterCommand}" IsVisible="{Binding HasFilter}"
+                        VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <material:MaterialIcon Kind="FilterRemove"/>
+                        <TextBlock Text="{i18n:Localize PeClearFilterLabel}"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- 表格（表头 + 行；对齐 el-table 列：名称/输出格式/分类/来源/备注/启用/操作；
+                 行间与列间均有分隔线：单元格右侧 1px 竖线（操作列除外）+ 行底线；
+                 表头与行区都强制纵向滚动条占位（Visible），两者可用宽度恒等 →
+                 描述列（* 弹性列）两边宽度一致，滚动条出现与否启用/操作列竖线都对齐） -->
+            <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+                <Grid ColumnDefinitions="190,130,84,84,*,72,210" MinHeight="44" Margin="2,0,2,0">
+                    <Border BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,0,1" Grid.ColumnSpan="7"/>
+                    <Border BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                        <TextBlock Text="{i18n:Localize PeColName}" FontWeight="DemiBold" VerticalAlignment="Center" Margin="8,6"/>
+                    </Border>
+                    <Border Grid.Column="1" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                        <TextBlock Text="{i18n:Localize PeColOutputFormat}" FontWeight="DemiBold" VerticalAlignment="Center" Margin="8,6"/>
+                    </Border>
+                    <Border Grid.Column="2" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                        <TextBlock Text="{i18n:Localize PeColCategory}" FontWeight="DemiBold" VerticalAlignment="Center" Margin="8,6"/>
+                    </Border>
+                    <Border Grid.Column="3" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                        <TextBlock Text="{i18n:Localize PeColSource}" FontWeight="DemiBold" VerticalAlignment="Center" Margin="8,6"/>
+                    </Border>
+                    <Border Grid.Column="4" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                        <TextBlock Text="{i18n:Localize PeColDescription}" FontWeight="DemiBold" VerticalAlignment="Center" Margin="8,6"/>
+                    </Border>
+                    <Border Grid.Column="5" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                        <TextBlock Text="{i18n:Localize PeColEnabled}" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border Grid.Column="6">
+                        <TextBlock Text="{i18n:Localize PeColActions}" FontWeight="DemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </Grid>
+                </ScrollViewer>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:PeRowItem">
+                                <Grid ColumnDefinitions="190,130,84,84,*,72,210" MinHeight="44" Margin="2,0,2,0">
+                                    <!-- 行分隔线 + 交替行背景 -->
+                                    <Border BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,0,1" Grid.ColumnSpan="7"/>
+                                    <Border Background="{DynamicResource TableRowAltBrush}" CornerRadius="4" Grid.ColumnSpan="7" IsVisible="{Binding IsAlt}"/>
+                                    <!-- 列分隔线：每单元格右侧竖线（操作列除外） -->
+                                    <Border BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="8,8"/>
+                                    </Border>
+                                    <Border Grid.Column="1" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                                        <TextBlock Text="{Binding OutputFormatLabel}" VerticalAlignment="Center" Margin="8,8"/>
+                                    </Border>
+                                    <Border Grid.Column="2" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                                        <TextBlock Text="{Binding Category}" VerticalAlignment="Center" Margin="8,8"/>
+                                    </Border>
+                                    <!-- 来源：内置灰 tag / 自定义蓝 tag -->
+                                    <Border Grid.Column="3" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                                        <Grid>
+                                            <Border CornerRadius="4" Padding="8,1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Background="{DynamicResource ChipGreyBrush}" IsVisible="{Binding Builtin}">
+                                                <TextBlock Text="{i18n:Localize PeBuiltinTag}" FontSize="12"/>
+                                            </Border>
+                                            <Border CornerRadius="4" Padding="8,1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Background="{DynamicResource ChipBlueBrush}" IsVisible="{Binding !Builtin}">
+                                                <TextBlock Text="{i18n:Localize PeCustomTag}" FontSize="12" Foreground="White"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <Border Grid.Column="4" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                                        <TextBlock Text="{Binding Description}" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" Opacity="0.75" Margin="8,8"/>
+                                    </Border>
+                                    <Border Grid.Column="5" BorderBrush="{DynamicResource TableGridLineBrush}" BorderThickness="0,0,1,0">
+                                        <ToggleSwitch IsChecked="{Binding Enabled}" Height="34" HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      Command="{Binding #Root.DataContext.ToggleEnabledCommand}"
+                                                      CommandParameter="{Binding}"/>
+                                    </Border>
+                                    <Border Grid.Column="6">
+                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock Text="—" IsVisible="{Binding Builtin}" Opacity="0.5"/>
+                                            <Button IsVisible="{Binding !Builtin}" Padding="6,3"
+                                                    Command="{Binding #Root.DataContext.EditCommand}" CommandParameter="{Binding}">
+                                                <TextBlock Text="{i18n:Localize PeEditAction}" FontSize="12"/>
+                                            </Button>
+                                            <Button IsVisible="{Binding !Builtin}" Padding="6,3"
+                                                    Command="{Binding #Root.DataContext.ExportCommand}" CommandParameter="{Binding}">
+                                                <TextBlock Text="{i18n:Localize PeExportJsonAction}" FontSize="12"/>
+                                            </Button>
+                                            <Button IsVisible="{Binding !Builtin}" Padding="6,3"
+                                                    Command="{Binding #Root.DataContext.DeleteCommand}" CommandParameter="{Binding}">
+                                                <TextBlock Text="{i18n:Localize PeDeleteAction}" FontSize="12" Foreground="{DynamicResource DangerSoftTextBrush}"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

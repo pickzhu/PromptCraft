@@ -1,0 +1,251 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:controls="using:PromptCraft.Controls"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:PromptPlazaViewModel"
+             x:Class="PromptCraft.PromptPlazaView"
+             x:Name="Root"
+             d:DesignWidth="1600" d:DesignHeight="960"
+             mc:Ignorable="d">
+
+    <UserControl.Styles>
+        <!-- 广场卡片：无按钮动画/呼吸（Border 直挂样式，不用 Button），鼠标移入仅高亮边框 -->
+        <Style Selector="Border.plaza-item">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BoxShadow" Value="0 0 0 #00000000"/>
+        </Style>
+        <Style Selector="Border.plaza-item:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryTintBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.Resources>
+        <!-- 广场卡片模板（masonry 动态列共用；固定宽 350，图片放大占满卡片宽度、等比例缩放高度不裁切；
+             作者头像 + 首字占位；点击打开详情抽屉） -->
+        <DataTemplate x:Key="PlazaCard" x:DataType="vm:PlazaItem">
+            <Border Classes="plaza-item" PointerPressed="OnItemPointerPressed"
+                    Background="{DynamicResource SukiCardBackground}" CornerRadius="10" Padding="0"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Top">
+                <StackPanel>
+                    <Grid>
+                        <Border Background="#22000000">
+                            <Image Source="{Binding Cover}" Stretch="Uniform"
+                                   HorizontalAlignment="Stretch" VerticalAlignment="Top"
+                                   IsVisible="{Binding Cover, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                        </Border>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+                                    IsVisible="{Binding Cover, Converter={x:Static ObjectConverters.IsNull}}">
+                            <material:MaterialIcon Kind="ImageOutline" Width="40" Height="40" Opacity="0.35"/>
+                            <TextBlock Text="{i18n:Localize PromptPlazaNoCover}" FontSize="12" Opacity="0.5"/>
+                        </StackPanel>
+                        <!-- 模型标签（左上角，黑底半透明） -->
+                        <Border CornerRadius="6" Padding="8,3" Margin="8,8,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                Background="#8C000000" IsVisible="{Binding Models, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Text="{Binding Models}" FontSize="11" FontWeight="DemiBold" Foreground="White"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="220"/>
+                        </Border>
+                        <!-- 推荐角标（右上角，橙色） -->
+                        <Border CornerRadius="0,0,0,10" Padding="8,4,12,4" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Background="{DynamicResource WarningBrush}" IsVisible="{Binding IsRecommended}">
+                            <TextBlock Text="{i18n:Localize PromptPlazaRecommended}" FontSize="12" FontWeight="Bold" Foreground="White"/>
+                        </Border>
+                    </Grid>
+                    <StackPanel Margin="12,10">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" Background="{DynamicResource SukiControlBackground}"
+                                        ClipToBounds="True">
+                                    <Grid>
+                                        <Image Source="{Binding Avatar}" Stretch="UniformToFill"
+                                               IsVisible="{Binding Avatar, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <TextBlock Text="{Binding AuthorInitial}" FontSize="9" Opacity="0.7"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   IsVisible="{Binding Avatar, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="{Binding AuthorName}" FontSize="12" Opacity="0.75" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding StatsLabel}" FontSize="11" Opacity="0.55" VerticalAlignment="Center"/>
+                        </Grid>
+                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Bold" TextWrapping="Wrap" MaxLines="2" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid Margin="14" RowDefinitions="Auto,Auto,*" RowSpacing="10">
+
+        <!-- ==================== 顶部：标题 + 我的投稿（入口暂隐藏，逻辑保留） ==================== -->
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+            <Button Grid.Column="1" Command="{Binding ToggleMySubmitsCommand}" IsVisible="False">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <material:MaterialIcon Kind="AccountBoxOutline"/>
+                    <TextBlock Text="{Binding MySubmitsButtonText}"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- ==================== 工具栏：搜索 / 模型筛选 / 排序 ==================== -->
+        <Grid Grid.Row="1" ColumnDefinitions="260,180,*,Auto,Auto" ColumnSpacing="8">
+            <TextBox Text="{Binding SearchText}" PlaceholderText="{i18n:Localize PromptPlazaSearchPlaceholder}"
+                     Height="34" VerticalAlignment="Center" VerticalContentAlignment="Center"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding ModelItems}" SelectedItem="{Binding SelectedModel}"
+                      PlaceholderText="{i18n:Localize PromptPlazaModelPlaceholder}"
+                      Height="34" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <RadioButton GroupName="plazaSort" Content="{i18n:Localize PromptPlazaSortLatest}" IsChecked="{Binding IsSortLatest}" VerticalAlignment="Center"/>
+                <RadioButton GroupName="plazaSort" Content="{i18n:Localize PromptPlazaSortView}" IsChecked="{Binding IsSortView}" VerticalAlignment="Center"/>
+                <RadioButton GroupName="plazaSort" Content="{i18n:Localize PromptPlazaSortCopy}" IsChecked="{Binding IsSortCopy}" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Grid.Column="3" Text="{Binding CountLabel}" VerticalAlignment="Center" Opacity="0.8"/>
+            <Button Grid.Column="4" Command="{Binding RefreshCommand}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <material:MaterialIcon Kind="Refresh"/>
+                    <TextBlock Text="{i18n:Localize TrainRefreshLabel}"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- ==================== 瀑布流（WaterfallPanel：动态列数 = 视口宽/300 取整、列宽均分剩余空间占满、
+             最短列优先分派、卡片高度自适应；滚动到底部自动加载下一页；无分页组件；外层整体滚动） ==================== -->
+        <Grid Grid.Row="2" IsVisible="{Binding HasItems}">
+            <ScrollViewer x:Name="PlazaScroll" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource PlazaCard}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <controls:WaterfallPanel ColumnWidth="300" Spacing="12"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ==================== 空态 / 加载失败 ==================== -->
+        <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10"
+                    IsVisible="{Binding !HasItems}">
+            <material:MaterialIcon Kind="StorefrontOutline" Width="56" Height="56" Opacity="0.35"/>
+            <TextBlock Text="{Binding EmptyText}" FontSize="15" Opacity="0.6" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="560"/>
+        </StackPanel>
+
+        <!-- ==================== 右侧详情抽屉（对齐提示词库标签抽屉：遮罩覆盖整个视口、面板贴右缘无圆角、
+             左竖线 + 左侧投影；点击遮罩关闭；关闭按钮无边框） ==================== -->
+        </Grid>
+        <Grid IsVisible="{Binding IsDetailOpen}">
+            <Border Background="{DynamicResource OverlayMediumBrush}" PointerPressed="OnMaskPointerPressed"/>
+            <Border HorizontalAlignment="Right" Width="640" Padding="0"
+                    Background="{DynamicResource SukiCardBackground}"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1,0,0,0"
+                    BoxShadow="-4 0 10 #66000000">
+                <Grid RowDefinitions="Auto,*" RowSpacing="0">
+                    <Grid ColumnDefinitions="*,Auto" Margin="18,16,18,10">
+                        <TextBlock Text="{i18n:Localize PromptPlazaDetailTitle}" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Command="{Binding CloseDetailCommand}" Padding="8,4"
+                                Background="Transparent" BorderThickness="0">
+                            <material:MaterialIcon Kind="Close"/>
+                        </Button>
+                    </Grid>
+                    <Grid Grid.Row="1" RowDefinitions="*,Auto">
+                        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="18,0,18,10"
+                                      IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <StackPanel Spacing="10">
+                                <!-- 左封面 + 右信息 -->
+                                <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                                    <Grid MinHeight="200">
+                                        <Border CornerRadius="10" Background="#22000000">
+                                            <Image Source="{Binding Detail.Cover}" Stretch="Uniform" HorizontalAlignment="Stretch" MaxHeight="420"
+                                                   IsVisible="{Binding Detail.Cover, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        </Border>
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="6"
+                                                    IsVisible="{Binding Detail.Cover, Converter={x:Static ObjectConverters.IsNull}}">
+                                            <material:MaterialIcon Kind="ImageOutline" Width="36" Height="36" Opacity="0.35"/>
+                                            <TextBlock Text="{i18n:Localize PromptPlazaNoCover}" FontSize="12" Opacity="0.5"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Spacing="8">
+                                        <TextBlock Text="{Binding Detail.Title}" FontSize="19" FontWeight="Bold" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Detail.Description}" FontSize="12" Opacity="0.75" TextWrapping="Wrap"
+                                                   IsVisible="{Binding Detail.Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Border CornerRadius="999" Padding="8,3" Background="{DynamicResource PrimaryTintBrush}"
+                                                    IsVisible="{Binding Detail.Models, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                <TextBlock Text="{Binding Detail.Models}" FontSize="12" Foreground="{DynamicResource PrimaryBrush}"/>
+                                            </Border>
+                                            <Border CornerRadius="999" Padding="8,3" Background="{DynamicResource ChipWhiteThinBrush}">
+                                                <TextBlock Text="{Binding Detail.StatsLabel}" FontSize="11" Opacity="0.7"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
+                                            <TextBlock Text="{i18n:Localize PromptPlazaAuthorLabel}" FontSize="12" Opacity="0.6" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <Border Width="18" Height="18" CornerRadius="9" Background="{DynamicResource SukiControlBackground}"
+                                                        ClipToBounds="True">
+                                                    <Grid>
+                                                        <Image Source="{Binding Detail.Avatar}" Stretch="UniformToFill"
+                                                               IsVisible="{Binding Detail.Avatar, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                                        <TextBlock Text="{Binding Detail.AuthorInitial}" FontSize="9" Opacity="0.7"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   IsVisible="{Binding Detail.Avatar, Converter={x:Static ObjectConverters.IsNull}}"/>
+                                                    </Grid>
+                                                </Border>
+                                                <TextBlock Text="{Binding Detail.AuthorName}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Row="1" Text="{i18n:Localize PromptPlazaSeedLabel}" FontSize="12" Opacity="0.6" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Detail.Seed}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Grid.Row="2" Text="{i18n:Localize PromptPlazaTagsLabel}" FontSize="12" Opacity="0.6" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Detail.TagsText}" FontSize="12" TextWrapping="Wrap"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- 正向提示词 -->
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <TextBlock Text="{i18n:Localize PromptPlazaPositiveLabel}" FontSize="13" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Classes="primary" Padding="10,4" Command="{Binding CopyPositiveCommand}">
+                                        <TextBlock Text="{i18n:Localize PromptPlazaCopyPositiveLabel}"/>
+                                    </Button>
+                                </Grid>
+                                <Border Background="#22000000" CornerRadius="10" Padding="12">
+                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                        <TextBlock Text="{Binding Detail.Positive}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </Border>
+
+                                <!-- 反向提示词（可选） -->
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8"
+                                      IsVisible="{Binding Detail.Negative, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="{i18n:Localize PromptPlazaNegativeLabel}" FontSize="13" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Padding="10,4" Command="{Binding CopyNegativeCommand}">
+                                        <TextBlock Text="{i18n:Localize PromptPlazaCopyNegativeLabel}"/>
+                                    </Button>
+                                </Grid>
+                                <Border Background="#22000000" CornerRadius="10" Padding="12"
+                                        IsVisible="{Binding Detail.Negative, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                                        <TextBlock Text="{Binding Detail.Negative}" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                        <!-- 状态条（加载中 / 错误 / 复制成功） -->
+                        <Border Grid.Row="1" Padding="18,10" Background="#14000000"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0">
+                            <TextBlock Text="{Binding DetailStatus}" FontSize="12" Opacity="0.85" TextWrapping="Wrap"
+                                       IsVisible="{Binding DetailStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

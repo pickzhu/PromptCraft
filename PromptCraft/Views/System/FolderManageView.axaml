@@ -1,0 +1,283 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.Folders"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             d:DesignWidth="1200" d:DesignHeight="800"
+             x:DataType="vm:FolderManageViewModel"
+             x:Class="PromptCraft.Views.Folders.FolderManageView"
+             mc:Ignorable="d">
+
+    <Grid RowDefinitions="Auto,*" RowSpacing="12" Margin="24">
+        <!-- 顶栏：内部态显示 [返回 + 当前文件夹标题]；列表态显示状态；右侧始终显示粘贴按钮 -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="{i18n:Localize FolderBack}" FontSize="13" Padding="12,0" Height="32"
+                        Command="{Binding BackToFoldersCommand}" IsVisible="{Binding IsInsideFolder}"
+                        VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ContentsTitle}" FontSize="14" FontWeight="DemiBold"
+                           VerticalAlignment="Center" IsVisible="{Binding IsInsideFolder}"
+                           TextTrimming="CharacterEllipsis" MaxWidth="600" />
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="Gray"
+                           VerticalAlignment="Center" IsVisible="{Binding !IsInsideFolder}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- 列表态（默认首页）：全部文件夹大图标网格（2x2 四宫格预览 + 名称 + 数量；双击进入内部） -->
+        <Border Grid.Row="1" IsVisible="{Binding !IsInsideFolder}" CornerRadius="8" Padding="10"
+                BorderThickness="1" BorderBrush="{DynamicResource SukiBorderBrush}"
+                Background="{DynamicResource SukiDarkColor}"
+                PointerPressed="OnFoldersAreaPointerPressed">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Folders}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FolderRow">
+                            <!-- 背景用主题资源 SukiDarkColor（随主题明暗切换，白色主题下为浅色）；
+                                 命中兜底：内部子元素 Background=Transparent 参与命中测试，事件冒泡回卡片 Border -->
+                            <Border Width="220" Margin="6" Padding="10" CornerRadius="8"
+                                    BorderThickness="2" PointerPressed="OnFolderCardPointerPressed"
+                                    Background="{DynamicResource SukiDarkColor}">
+                                <Border.Styles>
+                                    <Style Selector="Border">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SukiBorderBrush}" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                    </Style>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SukiPrimaryColor}" />
+                                    </Style>
+                                </Border.Styles>
+                                <StackPanel Spacing="8" Background="Transparent">
+                                    <!-- 四宫格预览：固定 2x2（行优先：左上→右上→左下→右下），槽位间有隔断；
+                                         空槽显示占位灰块（Image 无源时露出 Border 背景） -->
+                                    <Grid Height="104" ColumnDefinitions="*,*" RowDefinitions="*,*"
+                                          ColumnSpacing="4" RowSpacing="4" Background="Transparent">
+                                        <Border Grid.Row="0" Grid.Column="0" CornerRadius="4"
+                                                ClipToBounds="True" Background="{DynamicResource SukiBorderBrush}">
+                                            <Image Source="{Binding P0.Thumb}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <Border Grid.Row="0" Grid.Column="1" CornerRadius="4"
+                                                ClipToBounds="True" Background="{DynamicResource SukiBorderBrush}">
+                                            <Image Source="{Binding P1.Thumb}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <Border Grid.Row="1" Grid.Column="0" CornerRadius="4"
+                                                ClipToBounds="True" Background="{DynamicResource SukiBorderBrush}">
+                                            <Image Source="{Binding P2.Thumb}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <Border Grid.Row="1" Grid.Column="1" CornerRadius="4"
+                                                ClipToBounds="True" Background="{DynamicResource SukiBorderBrush}">
+                                            <Image Source="{Binding P3.Thumb}" Stretch="UniformToFill" />
+                                        </Border>
+                                    </Grid>
+                                    <TextBlock Text="{i18n:Localize FolderEmptyPreview}" FontSize="11" Foreground="Gray"
+                                               HorizontalAlignment="Center" IsVisible="{Binding !HasPreview}" />
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                        <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="DemiBold"
+                                                   TextTrimming="CharacterEllipsis" MaxWidth="150"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding AssetCount}" FontSize="12"
+                                                   Foreground="Gray" VerticalAlignment="Center" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- 内部态：当前文件夹内容（跨类型资产 + 类型徽标区分；顶部 [返回] 回到列表） -->
+        <Border Grid.Row="1" IsVisible="{Binding IsInsideFolder}" CornerRadius="8" Padding="6"
+                BorderThickness="1" BorderBrush="{DynamicResource SukiBorderBrush}"
+                Background="{DynamicResource SukiDarkColor}"
+                PointerPressed="OnFoldersAreaPointerPressed">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding FolderAssets}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FolderAssetItem">
+                            <!-- 背景用主题资源 SukiDarkColor（随主题明暗切换） -->
+                            <Border Width="150" Margin="5" CornerRadius="8" Padding="6"
+                                    BorderThickness="2" PointerPressed="OnAssetPointerPressed"
+                                    Background="{DynamicResource SukiDarkColor}">
+                                <Border.Styles>
+                                    <Style Selector="Border">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SukiBorderBrush}" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                    </Style>
+                                    <Style Selector="Border:pointerover">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SukiPrimaryColor}" />
+                                    </Style>
+                                </Border.Styles>
+                                <StackPanel Background="Transparent">
+                                    <Border CornerRadius="6" ClipToBounds="True" Height="100"
+                                            Background="{DynamicResource SukiBorderBrush}">
+                                        <Image Source="{Binding Thumb}" Stretch="UniformToFill" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" FontSize="12" TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis" Margin="0,6,0,2" />
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Border CornerRadius="3" Background="{Binding ScopeBrush}" Padding="5,1">
+                                            <TextBlock Text="{Binding TypeDisplay}" FontSize="9" Foreground="White" />
+                                        </Border>
+                                        <TextBlock Text="{Binding SubText}" FontSize="10" Foreground="Gray"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- 列表/内部空白区右键菜单（新建文件夹；内部态额外显示"粘贴到当前文件夹"） -->
+        <Popup x:Name="FolderAreaPopup" Placement="Pointer" IsLightDismissEnabled="True"
+               HorizontalOffset="0" VerticalOffset="0">
+            <Border CornerRadius="6" Background="{DynamicResource SukiCardBackground}"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1"
+                    BoxShadow="0 4 14 #55000000">
+                <StackPanel MinWidth="196">
+                    <Button Content="{i18n:Localize FolderNew}" Click="OnAreaNewFolderMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize FolderPasteTo}" Click="OnAreaPasteMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0"
+                            IsVisible="{Binding IsInsideFolder}">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- 文件夹卡片右键菜单：打开 / 粘贴到当前文件夹 / 重命名 / 删除 -->
+        <Popup x:Name="FolderCardPopup" Placement="Pointer" IsLightDismissEnabled="True"
+               HorizontalOffset="0" VerticalOffset="0">            <Border CornerRadius="6" Background="{DynamicResource SukiCardBackground}"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1"
+                    BoxShadow="0 4 14 #55000000">
+                <StackPanel MinWidth="196">
+                    <TextBlock x:Name="FolderCardTitle" FontSize="11" Foreground="{DynamicResource SukiLowText}"
+                               Padding="16,8,16,4" />
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+                    <Button Content="{i18n:Localize FolderOpen}" Click="OnFolderOpenMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize FolderPasteTo}" Click="OnFolderPasteMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize FolderRename}" Click="OnFolderRenameMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+                    <Button Content="{i18n:Localize FolderDelete}" Click="OnFolderDeleteMenuItemClick" Foreground="{DynamicResource DangerBrush}"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource DangerTintBrush}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- 资产右键菜单：编辑或详情 / 从文件夹移除 / 加入其他文件夹 / 复制 / 删除 -->
+        <Popup x:Name="AssetPopup" Placement="Pointer" IsLightDismissEnabled="True"
+               HorizontalOffset="0" VerticalOffset="0">
+            <Border CornerRadius="6" Background="{DynamicResource SukiCardBackground}"
+                    BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1"
+                    BoxShadow="0 4 14 #55000000">
+                <StackPanel MinWidth="196">
+                    <TextBlock x:Name="AssetPopupTitle" FontSize="11" Foreground="{DynamicResource SukiLowText}"
+                               Padding="16,8,16,4" />
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+                    <Button Content="{i18n:Localize FolderOpen}" Click="OnAssetOpenMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize FolderRemoveAsset}" Click="OnAssetRemoveMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize AddToFolder}" Click="OnAssetAddToFolderMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="{i18n:Localize FolderCopyAsset}" Click="OnAssetCopyMenuItemClick"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SukiPrimaryColor}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Rectangle Height="1" Fill="{DynamicResource SukiBorderBrush}" Margin="8,2" />
+                    <Button Content="{i18n:Localize FolderAssetDelete}" Click="OnAssetDeleteMenuItemClick" Foreground="{DynamicResource DangerBrush}"
+                            HorizontalContentAlignment="Left" Padding="16,9" FontWeight="DemiBold"
+                            Background="Transparent" BorderThickness="0">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource DangerTintBrush}" />
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

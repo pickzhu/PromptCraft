@@ -1,0 +1,397 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             xmlns:material="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:PromptCraft.ViewModels.System"
+             xmlns:models="using:PromptCraft.Models"
+             xmlns:ctl="using:PromptCraft.Controls"
+             xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
+             xmlns:i18n="clr-namespace:Ke.Bee.Localization.Extensions;assembly=Ke.Bee.Localization"
+             x:DataType="vm:ExpandViewModel"
+             x:Class="PromptCraft.ExpandView"
+             d:DesignWidth="1600" d:DesignHeight="900"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!--
+            创作需求输入框模板（基于 Avalonia 12 Fluent TextBox 模板结构，视觉资源用 SukiUI 主题）：
+            TextPresenter 与 TagChipLayer 在同一 Panel 同位同尺寸放置 —— 素材 chip（图标+@图片N+圆角框）
+            与文本同源同坐标渲染（字符 Rect 直接取自同一 TextLayout，零坐标转换），杜绝错位；
+            光标/IME/选区/剪贴板等编辑逻辑全部由 TextBox 保留。
+        -->
+        <ControlTheme x:Key="TagChipTextBoxTheme" TargetType="TextBox">
+            <Setter Property="Foreground" Value="{DynamicResource SukiText}"/>
+            <Setter Property="Background" Value="{DynamicResource SukiDarkColor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SukiControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="{DynamicResource SmallCornerRadius}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource SukiText}"/>
+            <Setter Property="SelectionBrush" Value="{DynamicResource SelectionBrush}"/>
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource TextControlPlaceholderForeground}"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="PART_BorderElement"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <DockPanel Margin="{TemplateBinding BorderThickness}">
+                            <ScrollViewer Name="PART_ScrollViewer"
+                                          HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                          VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+                                          IsScrollChainingEnabled="{TemplateBinding (ScrollViewer.IsScrollChainingEnabled)}"
+                                          AllowAutoHide="{TemplateBinding (ScrollViewer.AllowAutoHide)}"
+                                          BringIntoViewOnFocusChange="{TemplateBinding (ScrollViewer.BringIntoViewOnFocusChange)}">
+                                <Panel>
+                                    <TextBlock Name="PART_Placeholder"
+                                               Foreground="{TemplateBinding PlaceholderForeground}"
+                                               Text="{TemplateBinding PlaceholderText}"
+                                               TextAlignment="{TemplateBinding TextAlignment}"
+                                               TextWrapping="{TemplateBinding TextWrapping}"
+                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                               VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                    <TextPresenter Name="PART_TextPresenter"
+                                                   Background="{DynamicResource SukiDarkColor}"
+                                                   Text="{TemplateBinding Text, Mode=TwoWay}"
+                                                   CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+                                                   CaretIndex="{TemplateBinding CaretIndex}"
+                                                   SelectionStart="{TemplateBinding SelectionStart}"
+                                                   SelectionEnd="{TemplateBinding SelectionEnd}"
+                                                   TextAlignment="{TemplateBinding TextAlignment}"
+                                                   TextWrapping="{TemplateBinding TextWrapping}"
+                                                   LineHeight="{TemplateBinding LineHeight}"
+                                                   LetterSpacing="{TemplateBinding LetterSpacing}"
+                                                   PasswordChar="{TemplateBinding PasswordChar}"
+                                                   RevealPassword="{TemplateBinding RevealPassword}"
+                                                   SelectionBrush="{TemplateBinding SelectionBrush}"
+                                                   SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+                                                   CaretBrush="{TemplateBinding CaretBrush}"
+                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                    <!-- 与 TextPresenter 同位同尺寸的 chip 自绘层（零坐标转换，绝对对齐）；
+                                         Background 绑定主题资源：SukiUI 切主题时 DynamicResource 在本控件属性上更新并重绘 -->
+                                    <ctl:TagChipLayer Name="PART_TagChipLayer"
+                                                     Background="{DynamicResource SukiControlTouchBackground}"
+                                                     TextColor="{DynamicResource SukiText}"
+                                                     HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                     VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                </Panel>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:pointerover /template/ Border#PART_BorderElement">
+                <Setter Property="BorderBrush" Value="{DynamicResource SukiLightBorderBrush}"/>
+            </Style>
+            <Style Selector="^:disabled /template/ Border#PART_BorderElement">
+                <Setter Property="Opacity" Value="{DynamicResource ThemeDisabledOpacity}"/>
+            </Style>
+        </ControlTheme>
+    </UserControl.Resources>
+
+    <Grid ColumnDefinitions="480,*" Margin="16" ColumnSpacing="16">
+
+        <!-- 左：参数面板（busy 时整体禁用，对齐 PromptMaster 逐控件 disabled；超出可视区可滚动） -->
+        <suki:GlassCard Padding="20" IsEnabled="{Binding !IsBusy}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="14">
+                <TextBlock Text="{i18n:Localize AiProviderLabel}" Classes="form-label"/>
+                <ComboBox x:Name="ProviderCombo" ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}"
+                          DisplayMemberBinding="{Binding Name}"/>
+
+                <TextBlock Text="{i18n:Localize ModelLabel}" Classes="form-label"/>
+                <!-- 模型选择（对齐 AI服务商 ComboBox；列表随所选服务商联动） -->
+                <ComboBox ItemsSource="{Binding FilteredModels}" SelectedItem="{Binding SelectedModel}"
+                          DisplayMemberBinding="{Binding ModelName}"/>
+                <!-- 服务商无可用模型提示 + 去配置（对齐 PromptMaster pm-online-model-hint） -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,4,0,0"
+                      IsVisible="{Binding !HasExpandModels}">
+                    <TextBlock Grid.Column="0" Text="{Binding NoModelsText}" FontSize="12" Opacity="0.8"
+                               TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Classes="accent" Command="{Binding GoSettingsCommand}" Padding="8,2" VerticalAlignment="Center">
+                        <TextBlock Text="{i18n:Localize GoConfigureLabel}" FontSize="12"/>
+                    </Button>
+                </Grid>
+
+                <TextBlock Text="{i18n:Localize OutputFormatLabel}" Classes="form-label"/>
+                <ComboBox x:Name="RuleCombo" ItemsSource="{Binding RuleItems}" SelectedItem="{Binding SelectedRule}" DisplayMemberBinding="{Binding Name}"/>
+
+                <TextBlock Text="{i18n:Localize PromptEngineeringLabel}" Classes="form-label"/>
+                <ComboBox x:Name="EngineCombo" ItemsSource="{Binding EngineItems}" SelectedItem="{Binding SelectedEngine}" DisplayMemberBinding="{Binding Label}"
+                          PointerWheelChanged="OnEngineComboWheel">
+                    <ComboBox.Styles>
+                        <Style Selector="ComboBoxItem">
+                            <Setter Property="ContentTemplate">
+                                <Setter.Value>
+                                    <DataTemplate DataType="vm:ExpandViewModel+EngineOption">
+                                        <StackPanel Spacing="2">
+                                            <TextBlock Text="{Binding Label}" FontWeight="DemiBold"/>
+                                            <TextBlock Text="{Binding Description}" Classes="hint"
+                                                       FontSize="11" MaxWidth="320"
+                                                       HorizontalAlignment="Left" TextAlignment="Left"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ComboBox.Styles>
+                </ComboBox>
+
+                <!-- 动态表单（MiniMax 场景，catalog formFields：select/textarea/text + required + showIf） -->
+                <ItemsControl IsVisible="{Binding IsMinimax}" ItemsSource="{Binding DynamicFields}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:ExpandViewModel+FormField">
+                            <StackPanel Margin="0,4,0,0">
+                                <TextBlock Text="{Binding Label}" Classes="form-label"/>
+                                <ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}"
+                                          DisplayMemberBinding="{Binding Label}" IsVisible="{Binding IsSelect}"/>
+                                <TextBox Text="{Binding Value, Mode=TwoWay}" IsVisible="{Binding !IsSelect}"
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" VerticalContentAlignment="Top"
+                                         PlaceholderText="{Binding Placeholder}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 参考素材（媒体型；空态/有素材文案切换 + 卡片缩略图/类型徽标 + 清空按钮按需显示） -->
+                <StackPanel x:Name="MediaDropZone" IsVisible="{Binding IsMinimax}">
+                    <TextBlock Text="{i18n:Localize ReferenceMediaLabel}" Classes="form-label" Margin="0,8,0,4"/>
+                    <ItemsControl ItemsSource="{Binding ReferenceMedia}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:ExpandViewModel+MediaItem">
+                                <!-- 卡片对齐 PromptMaster pm-expand-media-card：大预览 + 卡内右上 × + label（类型序号）+ 文件名 -->
+                                <Border Width="200" Margin="4" BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1" CornerRadius="8"
+                                        Background="{DynamicResource SukiDarkColor}" ClipToBounds="True">
+                                    <StackPanel>
+                                        <Grid x:Name="MediaArea" Height="150" Background="#222" ClipToBounds="True">
+                                            <!-- 下层：缩略图 / 占位（图片卡、音频卡） -->
+                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+                                                   IsVisible="{Binding HasThumbnail}"/>
+                                            <StackPanel IsVisible="{Binding ShowPlaceholder}" Spacing="4"
+                                                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <TextBlock Text="♪" FontSize="26" Foreground="Gray"
+                                                           HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Kind}" FontSize="12" Foreground="Gray"
+                                                           HorizontalAlignment="Center"/>
+                                            </StackPanel>
+                                            <!-- 视频卡：复用 Test 页已验证组件（MediaVideoView：自管理 LibVLC/播放器/封面 Popup/生命周期） -->
+                                            <ctl:MediaVideoView VideoPath="{Binding FilePath}"
+                                                                IsPlaying="{Binding IsPlaying, Mode=TwoWay}"
+                                                                IsVisible="{Binding IsVideo}"/>
+                                        </Grid>
+                                        <StackPanel Margin="8,6,8,8" Spacing="2">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Text="{Binding Label}" FontSize="12" FontWeight="DemiBold"
+                                                           Foreground="{Binding KindColor}" VerticalAlignment="Center"/>
+                                                <!-- 卡内右上角 ×（红色边框圈 + 红叉；移出媒体区避免被 VideoView/Popup 原生窗口遮挡） -->
+                                                <Button Grid.Column="1" Width="22" Height="22" CornerRadius="11" Margin="4,0,0,0"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                        Background="Transparent" Foreground="{DynamicResource DangerBrush}"
+                                                        BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1.5"
+                                                        Classes="NoPressedAnimation"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ExpandViewModel)DataContext).RemoveReferenceCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <material:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                                </Button>
+                                            </Grid>
+                                            <TextBlock Text="{Binding FileName}" FontSize="11" Foreground="#999"
+                                                       TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FilePath}"/>
+                                            <!-- 播放/暂停按钮（圆形；移出媒体区：原生视口会遮挡媒体区内的按钮；视频→组件 PlayPause，音频→ViewModel PlayMedia） -->
+                                            <Button IsVisible="{Binding IsPlayable}" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16" Padding="0"
+                                                    Classes="NoPressedAnimation"
+                                                    Click="OnMediaPlayClicked">
+                                                <Button.Styles>
+                                                    <Style Selector="Button /template/ ContentPresenter">
+                                                        <Setter Property="Padding" Value="0"/>
+                                                    </Style>
+                                                </Button.Styles>
+                                                <Panel>
+                                                    <material:MaterialIcon Kind="PlayArrow" Width="16" Height="16"
+                                                                           IsVisible="{Binding !IsPlaying}"/>
+                                                    <material:MaterialIcon Kind="Pause" Width="16" Height="16"
+                                                                           IsVisible="{Binding IsPlaying}"/>
+                                                </Panel>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Command="{Binding PickReferenceCommand}" Padding="12" MinHeight="80"
+                            BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1" CornerRadius="6"
+                            Classes="NoPressedAnimation">
+                        <Button.Styles>
+                            <!-- hover 边框变亮（主色）；NoPressedAnimation 类已禁用 SukiPressMotion 呼吸/放大动画 -->
+                            <Style Selector="Button:pointerover /template/ Border">
+                                <Setter Property="BorderBrush" Value="{DynamicResource SukiPrimaryColor}"/>
+                                <Setter Property="BorderThickness" Value="1.5"/>
+                            </Style>
+                        </Button.Styles>
+                        <StackPanel HorizontalAlignment="Center" Spacing="4">
+                            <material:MaterialIcon Kind="Upload" Width="24" Height="24"/>
+                            <StackPanel IsVisible="{Binding HasMedia}" Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{i18n:Localize ContinueAddLabel}"/>
+                                <TextBlock Text="{i18n:Localize OrDropHereHint}" Classes="hint"/>
+                            </StackPanel>
+                            <StackPanel IsVisible="{Binding !HasMedia}" Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{i18n:Localize UploadMediaLabel}"/>
+                                <TextBlock Text="{i18n:Localize OrDragHereHint}" Classes="hint"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Button>
+                    <Button Foreground="Red" HorizontalAlignment="Right" Background="Transparent"
+                            BorderThickness="0"
+                            IsVisible="{Binding HasMedia}" Command="{Binding ClearReferencesCommand}" Content="{i18n:Localize ClearMediaLabel}"/>
+                </StackPanel>
+
+                <!-- 扩写长度（非媒体型，对齐 PromptMaster Ql 分支隐藏） -->
+                <StackPanel IsVisible="{Binding !IsMinimax}" Spacing="8">
+                    <TextBlock Text="{i18n:Localize ExpandLength}" Classes="form-label"/>
+                    <ComboBox x:Name="LengthCombo" ItemsSource="{Binding LengthItems}" SelectedItem="{Binding SelectedLength}" DisplayMemberBinding="{Binding LabelUi}"/>
+                    <StackPanel IsVisible="{Binding IsCustomLength}" Orientation="Horizontal" Spacing="8">
+                        <NumericUpDown Value="{Binding CustomCharsNumber}" Minimum="1" Maximum="20000" Increment="10" Width="150"/>
+                        <TextBlock Text="{i18n:Localize CharCountHint}" Classes="hint" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- 质量提示词（非媒体型 + 标签格式，对齐 PromptMaster !Ql && un && zl） -->
+                <CheckBox IsVisible="{Binding ShowQualityPrompt}" IsChecked="{Binding QualityPromptEnabled}" Content="{i18n:Localize QualityPrefixLabel}"/>
+                <TextBox IsVisible="{Binding ShowQualityPromptBox}" IsEnabled="{Binding QualityPromptEnabled}"
+                         Text="{Binding QualityPromptPrefix, Mode=TwoWay}"
+                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70"
+                         PlaceholderText="{i18n:Localize QualityPrefixPlaceholder}"/>
+
+                <!-- 用户自定义提示词（非媒体型） -->
+                <StackPanel IsVisible="{Binding !IsMinimax}" Spacing="6">
+                    <TextBlock Text="{i18n:Localize CustomPrompt}" Classes="form-label"/>
+                    <TextBox Text="{Binding CustomPrompt, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalContentAlignment="Top" MinHeight="80"
+                             PlaceholderText="{i18n:Localize CustomPromptPlaceholder}"/>
+                </StackPanel>
+
+                <!-- 篇幅提示（非媒体型，对齐 PromptMaster ct()） -->
+                <TextBlock IsVisible="{Binding !IsMinimax}" Classes="hint"
+                           Text="{Binding LengthHint}"/>
+
+                <TextBlock IsVisible="{Binding !IsMinimax}" Classes="hint"
+                           Text="{i18n:Localize MoreRulesTip}"/>
+            </StackPanel>
+            </ScrollViewer>
+        </suki:GlassCard>
+
+        <!-- 右：创作需求 + 结果（两卡各占一半高度，撑满应用高度） -->
+        <Grid Grid.Column="1" RowDefinitions="*,*" RowSpacing="12">
+            <suki:GlassCard Padding="16" Grid.Row="0">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{i18n:Localize CreationRequest}" FontWeight="DemiBold" VerticalAlignment="Center"/>
+                            <!-- 输出语言 radio（zh/en，对齐 PromptMaster radio-button 组） -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                                        IsEnabled="{Binding !IsBusy}">
+                                <RadioButton GroupName="ExpandOutLang" Content="{i18n:Localize LangChinese}" IsChecked="{Binding IsLangZh}"/>
+                                <RadioButton GroupName="ExpandOutLang" Content="{i18n:Localize LangEnglish}" IsChecked="{Binding IsLangEn}"/>
+                            </StackPanel>
+                        </Grid>
+                        <!-- 创作需求输入（对齐反混淆 1055-1071；chip 由模板内 TagChipTextPresenter 在文本层绘制，无 overlay） -->
+                        <Grid Grid.Row="1">
+                            <ScrollViewer x:Name="ComposerScroller"
+                                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ctl:TagChipTextBox Text="{Binding UserInput, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top" FontSize="13" Padding="10,8"
+                                         ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         SelectionBrush="{DynamicResource SelectionBrush}" PlaceholderText="{Binding DemandPlaceholder}"
+                                         x:Name="DemandBox"
+                                         Theme="{StaticResource TagChipTextBoxTheme}"
+                                         TextChanged="OnDemandTextChanged"
+                                         KeyDown="OnDemandKeyDown" LostFocus="OnDemandLostFocus"/>
+                            </ScrollViewer>
+                            <!-- @mention 素材引用面板（Popup 定位到光标正下方） -->
+                            <Popup x:Name="MentionPopup"
+                                   IsOpen="{Binding IsMentionOpen, Mode=TwoWay}"
+                                   PlacementTarget="{Binding #DemandBox}"
+                                   Placement="Bottom"
+                                   Width="320"
+                                   MaxHeight="240"
+                                   IsLightDismissEnabled="False">
+                                <Border Background="{DynamicResource SukiDarkColor}"
+                                        BorderBrush="{DynamicResource SukiBorderBrush}" BorderThickness="1" CornerRadius="6"
+                                        Padding="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{i18n:Localize MentionTitleLabel}" Classes="form-label"/>
+                                        <TextBlock IsVisible="{Binding !HasMentionMedia}" Text="{i18n:Localize MentionUploadFirst}" Classes="hint"/>
+                                        <TextBlock IsVisible="{Binding ShowMentionNoMatch}" Text="{i18n:Localize MentionNoMatch}" Classes="hint"/>
+                                        <ItemsControl IsVisible="{Binding HasMentionMatch}" ItemsSource="{Binding MentionFiltered}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="vm:ExpandViewModel+MediaItem">
+                                                    <Button Click="OnMentionItemClicked" Tag="{Binding}" Padding="4"
+                                                            HorizontalAlignment="Stretch" Background="Transparent">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <Image Source="{Binding Thumbnail}" Width="24" Height="24"
+                                                                   IsVisible="{Binding HasThumbnail}"/>
+                                                            <TextBlock Text="{Binding Kind}" Foreground="LimeGreen" FontSize="12" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding Tag}" Foreground="{DynamicResource HoverLightBlueBrush}" FontSize="12" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding FileName}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="140"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            <Button Grid.Column="1" Background="{DynamicResource PrimaryBrush}" Foreground="White"
+                                    Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBusy}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <material:MaterialIcon Kind="Send"/>
+                                    <TextBlock Text="{i18n:Localize GeneratePrompt}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Margin="8,0,0,0" Foreground="White" Background="{DynamicResource DangerDeepBrush}"
+                                    IsVisible="{Binding IsBusy}" Command="{Binding StopCommand}"
+                                    Content="{i18n:Localize ExpandStop}"/>
+                        </Grid>
+                    </Grid>
+                </suki:GlassCard>
+
+                <suki:GlassCard Padding="16" Grid.Row="1">
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Text="{i18n:Localize ExpandResult}" FontWeight="DemiBold"/>
+                            <Button Grid.Column="1" Content="{i18n:Localize CopyPrompt}" Foreground="{DynamicResource PrimaryBrush}"
+                                    Command="{Binding CopyResultCommand}" IsEnabled="{Binding HasResult}"
+                                    Margin="12,0,0,0"/>
+                            <Button Grid.Column="2" Content="{i18n:Localize SaveToLibrary}" Foreground="{DynamicResource SuccessTextBrush}"
+                                    Command="{Binding SaveToLibraryCommand}" IsEnabled="{Binding HasResult}"
+                                    Margin="12,0,0,0"/>
+                        </Grid>
+                        <TextBox Grid.Row="1" Text="{Binding Result, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 PlaceholderText="{Binding ResultPlaceholder}"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{i18n:Localize ExpandResultTip}" Classes="hint"/>
+                            <TextBlock Grid.Column="1" Text="{Binding ResultCharCountText}" Classes="hint"
+                                       VerticalAlignment="Center" Margin="12,0,0,0" IsVisible="{Binding HasResult}"/>
+                        </Grid>
+                    </Grid>
+                </suki:GlassCard>
+
+            <!-- Loading 遮罩 -->
+            <ProgressBar IsVisible="{Binding IsBusy}" IsIndeterminate="True" Height="3"
+                         VerticalAlignment="Top" Grid.RowSpan="2"/>
+        </Grid>
+    </Grid>
+</UserControl>
