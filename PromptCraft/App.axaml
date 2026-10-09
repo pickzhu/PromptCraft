@@ -18,8 +18,11 @@
 			<TrayIcon Icon="/Assets/node.png" ToolTipText="PromptCraft">
 				<TrayIcon.Menu>
 					<NativeMenu>
-						<NativeMenuItem Header="{Binding MenuExit}">
-						</NativeMenuItem>
+						<NativeMenuItem Header="{Binding TrayShowMain}"/>
+						<NativeMenuItem Header="{Binding TrayOpenWorkspace}"/>
+						<NativeMenuItem Header="{Binding TraySyncComfy}"/>
+						<NativeMenuItemSeparator/>
+						<NativeMenuItem Header="{Binding MenuExit}"/>
 					</NativeMenu>
 				</TrayIcon.Menu>
 			</TrayIcon>

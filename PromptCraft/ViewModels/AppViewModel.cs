@@ -11,6 +11,15 @@ public partial class AppViewModel : ViewModelBase
     [ObservableProperty]
     private string _menuExit = string.Empty;
 
+    [ObservableProperty]
+    private string _trayShowMain = string.Empty;
+
+    [ObservableProperty]
+    private string _trayOpenWorkspace = string.Empty;
+
+    [ObservableProperty]
+    private string _traySyncComfy = string.Empty;
+
     public string Language { get; set; }
 
     public AppViewModel(ILocalizer localizer, IBaseNotice baseNotice) : base(localizer, baseNotice)
@@ -30,6 +39,9 @@ public partial class AppViewModel : ViewModelBase
     private void PageDataChaged()
     {
         this.MenuExit = _local?["EXIT"].ToString() ?? string.Empty;
+        this.TrayShowMain = _local?["TrayShowMain"].ToString() ?? string.Empty;
+        this.TrayOpenWorkspace = _local?["TrayOpenWorkspace"].ToString() ?? string.Empty;
+        this.TraySyncComfy = _local?["TraySyncComfy"].ToString() ?? string.Empty;
     }
 
     public override void OnSystemLangueChanged(object? data)

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -12,6 +13,7 @@ using PromptCraft.Service.Diagnostics;
 using PromptCraft.StaticData;
 using PromptCraft.Utils;
 using PromptCraft.ViewModels;
+using PromptCraft.Views;
 using Ke.Bee.Localization.Localizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -20,6 +22,8 @@ using SukiUI;
 using SukiUI.Controls;
 using SukiUI.Toasts;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -27,6 +31,18 @@ namespace PromptCraft;
 
 public partial class App : Application
 {
+
+    /// <summary>桌面生命周期（托盘与窗口联动）。</summary>
+    private IClassicDesktopStyleApplicationLifetime? _desktop;
+
+    /// <summary>启动时构建的服务容器（托盘菜单动作取用服务）。</summary>
+    private IServiceProvider? _services;
+
+    /// <summary>托盘图标上一次点击时间（双击检测）。</summary>
+    private DateTime _lastTrayClick = DateTime.MinValue;
+
+    /// <summary>托盘双击判定时间窗口（毫秒）。</summary>
+    private const double TrayDoubleClickWindowMs = 350;
     public override void Initialize()
     {
         // 日志系统：最早阶段引导静态实例 + 安装全局异常处理器 + 记录启动
@@ -49,6 +65,8 @@ public partial class App : Application
         // 迁移 JSON 配置到 SQLite（幂等）
         ConfigRepository.MigrateFromJson(AppInitData.Config);
         AvaloniaXamlLoader.Load(this);
+        // 托盘：TrayIcon/NativeMenuItem 的 CLR 事件无法在 XAML 中绑定，统一在代码侧接线（此时托盘图标树已加载）
+        WireTrayEvents();
 #if DEBUG
         this.AttachDeveloperTools();
 #endif
@@ -67,6 +85,10 @@ public partial class App : Application
             collection.AddComfyUIServices();
             collection.InitViewServices();
             var service = collection.BuildServiceProvider();
+
+            // 供托盘菜单等应用级动作取用（桌面生命周期 + 服务容器）
+            _desktop = desktop;
+            _services = service;
 
             // T0.1：初始化工作空间（读 AppConfig.WorkspaceDir，建 8 个子目录；缩略图目录依赖它）
             EnsureWorkspace(service, logger);
@@ -223,5 +245,152 @@ public partial class App : Application
             }
             _theme.Locale = AppInitData.Config.Language.ToString().Replace('_', '-');
         }
+    }
+
+    // ---------- 托盘：单击/双击/菜单动作 ----------
+
+    /// <summary>托盘 CLR 事件接线：顺序与 App.axaml 的 &lt;NativeMenu&gt; 一致——[0]打开主窗口 [1]打开工作空间 [2]同步 [3]分隔线 [4]退出。</summary>
+    private void WireTrayEvents()
+    {
+        try
+        {
+            if (GetValue(TrayIcon.IconsProperty) is not TrayIcons icons || icons.Count == 0) return;
+            var tray = icons[0];
+            tray.Clicked += OnTrayIconClicked;
+            if (tray.Menu is not { } menu) return;
+            EventHandler?[] actions = [OnTrayShowClicked, OnTrayOpenWorkspaceClicked, OnTraySyncComfyClicked, null, OnTrayExitClicked];
+            var index = 0;
+            foreach (var item in menu.Items)
+            {
+                if (item is NativeMenuItem menuItem && index < actions.Length && actions[index] is { } handler)
+                {
+                    menuItem.Click += handler;
+                }
+                index++;
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Instance.Warn("托盘菜单接线失败：" + ex.Message, "App", ex);
+        }
+    }
+
+    /// <summary>托盘图标单击：作为双击检测的第一击（Windows 左键触发 Clicked，右键弹菜单）。</summary>
+    private void OnTrayIconClicked(object? sender, EventArgs e)
+    {
+        var now = DateTime.UtcNow;
+        if ((now - _lastTrayClick).TotalMilliseconds <= TrayDoubleClickWindowMs)
+        {
+            _lastTrayClick = DateTime.MinValue;
+            ShowMainWindow();
+        }
+        else
+        {
+            _lastTrayClick = now;
+        }
+    }
+
+    /// <summary>显示并激活主窗口（隐藏/最小化后恢复）。</summary>
+    private void ShowMainWindow()
+    {
+        try
+        {
+            if (_desktop?.MainWindow is { } window)
+            {
+                window.WindowState = WindowState.Normal;
+                window.Show();
+                window.Activate();
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Instance.Warn("托盘显示主窗口失败：" + ex.Message, "Tray", ex);
+        }
+    }
+
+    private void OnTrayShowClicked(object? sender, EventArgs e) => ShowMainWindow();
+
+    /// <summary>打开工作空间目录（在资源管理器中定位）。</summary>
+    private void OnTrayOpenWorkspaceClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            var root = _services?.GetService<IWorkspaceService>()?.Root;
+            if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
+            {
+                LogService.Instance.Warn("托盘打开工作空间失败：工作空间目录不存在或未初始化", "Tray");
+                return;
+            }
+            Process.Start(new ProcessStartInfo { FileName = root, UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            LogService.Instance.Warn("托盘打开工作空间失败：" + ex.Message, "Tray", ex);
+        }
+    }
+
+    /// <summary>托盘触发一次 ComfyUI 图库同步（与图库页同一服务）。</summary>
+    private async void OnTraySyncComfyClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            var sync = _services?.GetRequiredService<IImageSyncService>();
+            if (sync is null) return;
+            LogService.Instance.Info(Localizer.Instance?["SyncStarted"] ?? "开始同步图片", "Tray");
+            var result = await sync.SyncAsync();
+            var msg = string.Format(Localizer.Instance?["SyncCompleted"] ?? "同步完成: 新增 {0}, 更新 {1}, 删除 {2}",
+                result.NewFiles, result.UpdatedFiles, result.DeletedFiles);
+            LogService.Instance.Info(msg, "Tray");
+            ShowTrayToast(msg);
+        }
+        catch (Exception ex)
+        {
+            var msg = string.Format(Localizer.Instance?["SyncFailed"] ?? "同步失败: {0}", ex.Message);
+            LogService.Instance.Warn(msg, "Tray", ex);
+            ShowTrayToast(msg, success: false);
+        }
+    }
+
+    /// <summary>托盘"退出"：先放行主窗口真实关闭，再由桌面生命周期随窗口关闭退出。</summary>
+    private void OnTrayExitClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (_desktop?.MainWindow is MainWindow mainWindow)
+            {
+                mainWindow.AllowClose = true;
+                mainWindow.Close();
+            }
+            else
+            {
+                _desktop?.Shutdown();
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Instance.Warn("托盘退出失败：" + ex.Message, "Tray", ex);
+        }
+    }
+
+    /// <summary>托盘动作完成后的自动消失提示（窗口隐藏时也会排队，下次显示时可见）。</summary>
+    private void ShowTrayToast(string content, bool success = true)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                if (_services?.GetService(typeof(ISukiToastManager)) is not ISukiToastManager toastManager) return;
+                var toast = FluentSukiToastBuilder.CreateSimpleInfoToast(toastManager);
+                toast.SetTitle("PromptCraft");
+                toast.SetContent(content);
+                toast.SetCanDismissByClicking(true);
+                toast.Toast.DismissTimeout = TimeSpan.FromSeconds(4);
+                toast.Queue();
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warn("托盘提示弹窗失败：" + ex.Message, "Tray", ex);
+            }
+        });
     }
 }

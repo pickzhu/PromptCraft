@@ -1504,5 +1504,8 @@
   "NovelAssetGenAccepted": "已保存到资产目录：{0}",
   "NovelAssetGenNoDir": "保存失败：资产目录无效，请先选择资产目录。",
   "NovelAssetGenRejected": "已删除该生成结果。",
-  "NovelAssetGenNoImageGaps": "当前批次没有可自动生成的图片提示词（音色缺口请到 VoiceStudio 手动生成）"
+  "NovelAssetGenNoImageGaps": "当前批次没有可自动生成的图片提示词（音色缺口请到 VoiceStudio 手动生成）",
+  "TrayShowMain": "打开主窗口",
+  "TrayOpenWorkspace": "打开工作空间目录",
+  "TraySyncComfy": "同步 ComfyUI 图库"
 }

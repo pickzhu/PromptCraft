@@ -1504,5 +1504,8 @@
   "NovelAssetGenAccepted": "Saved to asset folder: {0}",
   "NovelAssetGenNoDir": "Save failed: asset folder is invalid, please pick one first.",
   "NovelAssetGenRejected": "Discarded.",
-  "NovelAssetGenNoImageGaps": "This batch has no auto-generatable image prompts (voice gaps are generated manually in VoiceStudio)"
+  "NovelAssetGenNoImageGaps": "This batch has no auto-generatable image prompts (voice gaps are generated manually in VoiceStudio)",
+  "TrayShowMain": "Open Main Window",
+  "TrayOpenWorkspace": "Open Workspace Folder",
+  "TraySyncComfy": "Sync ComfyUI Gallery"
 }
