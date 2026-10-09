@@ -4,6 +4,7 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<VlcWindowsX64Enabled>true</VlcWindowsX64Enabled>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Avalonia" />

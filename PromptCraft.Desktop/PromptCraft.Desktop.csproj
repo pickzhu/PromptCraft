@@ -5,7 +5,6 @@
     One for Windows with net10.0-windows TFM, one for MacOS with net10.0-macos and one with net10.0 TFM for Linux.-->
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
-		<PublishAot>true</PublishAot>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 		<EFScaffoldModelStage>publish</EFScaffoldModelStage>
