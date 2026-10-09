@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using LibVLCSharp.Shared;
-using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 

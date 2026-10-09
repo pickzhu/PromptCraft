@@ -4,9 +4,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<EFScaffoldModelStage>publish</EFScaffoldModelStage>
   </PropertyGroup>
 
   <ItemGroup>
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+		<PrivateAssets>all</PrivateAssets>
+	</PackageReference>
     <ProjectReference Include="..\BaseClassLib\BaseClassLib.csproj" />
     <!-- 供 Markdown 渲染失败时输出日志（静态 LogService.Instance，不引入 DI 依赖） -->
     <ProjectReference Include="..\PromptCraft.Service\PromptCraft.Service.csproj" />

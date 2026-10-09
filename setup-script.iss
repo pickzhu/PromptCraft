@@ -21,8 +21,8 @@ SetupIconFile=.\PromptCraft\Assets\logo.ico
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: ".\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: ".\publish\PromptCraft.Desktop.exe"; DestDir: "{app}"; Flags: ignoreversion
+; 添加 Excludes: "*.pdb" 排除所有调试符号文件，确保包体积最小
+Source: ".\publish\*"; DestDir: "{app}"; Excludes: "*.pdb"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\PromptCraft"; Filename: "{app}\PromptCraft.Desktop.exe"; IconFilename: "{app}\PromptCraft.Desktop.exe"
