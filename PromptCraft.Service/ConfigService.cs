@@ -36,7 +36,7 @@ namespace PromptCraft.Service
                      new CultureInfo("zh-CN"),
                      // currentCulture 在基础设施加载时设置，可以从应用程序设置或其他地方获取
                      //Thread.CurrentThread.CurrentCulture,
-                     new CultureInfo(defaultLan ?? "en-US"),
+                     new CultureInfo(defaultLan ?? "zh-CN"),
                      $"PromptCraft/Assets/i18n");
                  return options;
              });

@@ -85,7 +85,7 @@ namespace PromptCraft.Common
             filePath = Path.Combine(filePath, fileName);
             if (!File.Exists(filePath))
             {
-                return default; // 返回默认值
+                return new T(); // 返回默认值
             }
             string content = File.ReadAllText(filePath, Encoding.UTF8);
             return JsonSerializer.Deserialize<T>(content) ?? new T();
